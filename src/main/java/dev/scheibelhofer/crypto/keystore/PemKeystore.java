@@ -1,32 +1,38 @@
 package dev.scheibelhofer.crypto.keystore;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.Key;
+import java.security.KeyFactory;
 import java.security.KeyStoreException;
 import java.security.KeyStoreSpi;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.Collection;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class PemKeystore extends KeyStoreSpi {
 
     private Map<String, Certificate> certificates = new HashMap<>();
+    private Map<String, PrivateKey> privateKeys = new HashMap<>();
 
     @Override
     public Key engineGetKey(String alias, char[] password) throws NoSuchAlgorithmException, UnrecoverableKeyException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'engineGetKey'");
+        return privateKeys.get(alias);
     }
 
     @Override
@@ -73,7 +79,10 @@ public class PemKeystore extends KeyStoreSpi {
 
     @Override
     public Enumeration<String> engineAliases() {
-        return Collections.enumeration(certificates.keySet());
+        Set<String> aliases = new HashSet<>();
+        aliases.addAll(certificates.keySet());
+        aliases.addAll(privateKeys.keySet());
+        return Collections.enumeration(aliases);
     }
 
     @Override
@@ -84,12 +93,12 @@ public class PemKeystore extends KeyStoreSpi {
 
     @Override
     public int engineSize() {
-        return certificates.size();
+        return certificates.size() + privateKeys.size();
     }
 
     @Override
     public boolean engineIsKeyEntry(String alias) {
-        return false;
+        return privateKeys.containsKey(alias);
     }
 
     @Override
@@ -114,13 +123,29 @@ public class PemKeystore extends KeyStoreSpi {
     public void engineLoad(InputStream stream, char[] password)
             throws IOException, NoSuchAlgorithmException, CertificateException {
         try (stream) {
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");          
-            Collection<? extends Certificate> certificateSet = cf.generateCertificates(stream);
-            certificates = new HashMap<String,Certificate>(certificateSet.size());
-            for (Certificate cer : certificateSet) {
-                String alias = generateAlias(cer);
-                certificates.put(alias, cer);
+            PemReader pemReader = new PemReader(stream);
+
+            for (PemReader.Entry entry : pemReader.readEntries()) {
+                switch (entry.type) {
+                    case x509Certificate: {
+                        CertificateFactory cf = CertificateFactory.getInstance("X.509");         
+                        X509Certificate cert = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(entry.encoding));
+                        String alias = generateAlias(cert);
+                        certificates.put(alias, cert);
+                    }
+                    case privateKey: {
+                        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(entry.encoding);
+                        KeyFactory kf = KeyFactory.getInstance("RSA");
+                        PrivateKey privateKey = kf.generatePrivate(spec);
+                        String alias = makeUniqueAlias(privateKeys.keySet(), "private-key-");
+                        privateKeys.put(alias, privateKey);
+                    }
+                    default:
+                        break;
+                }
             }
+        } catch (InvalidKeySpecException e) {
+            throw new IOException("error loading key", e);
         }                  
     }
 
@@ -132,13 +157,13 @@ public class PemKeystore extends KeyStoreSpi {
         } else {
             suggestedAlias = "certificate-";
         }
-        return makeUniqueAlias(suggestedAlias);
+        return makeUniqueAlias(certificates.keySet(), suggestedAlias);
     }
 
-    private String makeUniqueAlias(String suggestedAlias) {
+    private String makeUniqueAlias(Set<String> existingAliases, String suggestedAlias) {
         String alias = suggestedAlias;
         int i = 0;
-        while (certificates.containsKey(alias)) {
+        while (existingAliases.contains(alias)) {
             alias = suggestedAlias + i;
             i++;
         }
