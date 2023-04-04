@@ -16,12 +16,13 @@ class PemReader {
     final String END_CERTIFICATE = "-----END CERTIFICATE-----";
     final String BEGIN_PRIVATE_KEY = "-----BEGIN PRIVATE KEY-----";
     final String END_PRIVATE_KEY = "-----END PRIVATE KEY-----";
+    final String BEGIN_ENCRYPTED_PRIVATE_KEY = "-----BEGIN ENCRYPTED PRIVATE KEY-----";
+    final String END_ENCRYPTED_PRIVATE_KEY = "-----END ENCRYPTED PRIVATE KEY-----";
     final String END = "-----END";
 
     static class Entry {
         static enum Type {
-            privateKey,
-            x509Certificate
+            privateKey, x509Certificate, encryptedPrivateKey
         }
         Type type;
         byte[] encoding;
@@ -55,6 +56,7 @@ class PemReader {
             switch (line) {
                 case BEGIN_CERTIFICATE:  entry.type = Entry.Type.x509Certificate; break;
                 case BEGIN_PRIVATE_KEY:  entry.type = Entry.Type.privateKey; break;
+                case BEGIN_ENCRYPTED_PRIVATE_KEY:  entry.type = Entry.Type.encryptedPrivateKey; break;
                 default: entry.type = Entry.Type.x509Certificate;
             }
         }
