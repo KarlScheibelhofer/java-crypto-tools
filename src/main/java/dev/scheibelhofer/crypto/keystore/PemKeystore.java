@@ -132,6 +132,7 @@ public class PemKeystore extends KeyStoreSpi {
                         X509Certificate cert = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(entry.encoding));
                         String alias = generateAlias(cert);
                         certificates.put(alias, cert);
+                        break;
                     }
                     case privateKey: {
                         PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(entry.encoding);
@@ -139,6 +140,7 @@ public class PemKeystore extends KeyStoreSpi {
                         PrivateKey privateKey = kf.generatePrivate(spec);
                         String alias = makeUniqueAlias(privateKeys.keySet(), "private-key-");
                         privateKeys.put(alias, privateKey);
+                        break;
                     }
                     default:
                         break;
