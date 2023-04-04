@@ -3,7 +3,6 @@ package dev.scheibelhofer.crypto.keystore;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
@@ -35,12 +34,6 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
-import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
-import org.bouncycastle.operator.InputDecryptorProvider;
-import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
-
 import dev.scheibelhofer.crypto.provider.CryptoSupportProvider;
 import dev.scheibelhofer.crypto.provider.NullPrivateKey;
 
@@ -68,10 +61,10 @@ public class PemKeystore extends KeyStoreSpi {
         try {
             PBEKeySpec pbeKeySpec = new PBEKeySpec(password);
             String epkiAlgorithmName = epki.getAlgName();
-            // if (epkiAlgorithmName.equals("PBES2")) {
-            //     epkiAlgorithmName = "PBEWithHmacSHA256AndAES_128";
-            //     // epkiAlgorithmName = "PBKDF2WithHmacSHA256";
-            // }
+            if (epkiAlgorithmName.equals("PBES2")) {
+                epkiAlgorithmName = "PBEWithHmacSHA256AndAES_128";
+                // epkiAlgorithmName = "PBKDF2WithHmacSHA256";
+            }
             SecretKeyFactory skf = SecretKeyFactory.getInstance(epkiAlgorithmName);
             Key pbeKey = skf.generateSecret(pbeKeySpec);
             AlgorithmParameters algParams = epki.getAlgParameters();
