@@ -60,40 +60,20 @@ public class PemKeystore extends KeyStoreSpi {
     private PrivateKey decrypPrivateKeyJDK(EncryptedPrivateKeyInfo epki, char[] password) throws NoSuchAlgorithmException {
         try {
             PBEKeySpec pbeKeySpec = new PBEKeySpec(password);
-            String epkiAlgorithmName = epki.getAlgName();
-            if (epkiAlgorithmName.equals("PBES2")) {
-                epkiAlgorithmName = "PBEWithHmacSHA256AndAES_128";
-                // epkiAlgorithmName = "PBKDF2WithHmacSHA256";
-            }
-            SecretKeyFactory skf = SecretKeyFactory.getInstance(epkiAlgorithmName);
-            Key pbeKey = skf.generateSecret(pbeKeySpec);
             AlgorithmParameters algParams = epki.getAlgParameters();
-            Cipher cipher = Cipher.getInstance(epkiAlgorithmName);
+            // toString() yields the correct name for the cipher, not epki.getAlgName();
+            String pbes2Name = algParams.toString();
+            SecretKeyFactory skf = SecretKeyFactory.getInstance(pbes2Name);
+            Key pbeKey = skf.generateSecret(pbeKeySpec);
+            Cipher cipher = Cipher.getInstance(pbes2Name);
             cipher.init(Cipher.DECRYPT_MODE, pbeKey, algParams);
             PKCS8EncodedKeySpec keySpec = epki.getKeySpec(cipher);
-            // PKCS8EncodedKeySpec keySpec = epki.getKeySpec(pbeKey);
             KeyFactory kf = KeyFactory.getInstance(keySpec.getAlgorithm());
             return kf.generatePrivate(keySpec);
         } catch (InvalidKeyException | InvalidKeySpecException | NoSuchPaddingException | InvalidAlgorithmParameterException e) {
             throw new NoSuchAlgorithmException("error decrypting private key", e);
         }
     }
-
-    // private PrivateKey decryptPrivateKey() {
-    // //Load and parse PEM object
-    // PEMParser pemRd = new PEMParser(new InputStreamReader(fis));
-    // Object objectInPemFile = pemRd.readObject();
-
-    // //I do not know why BC loads the file as a PKCS8 object. OpenSSL does not recognize it as such.
-    // PKCS8EncryptedPrivateKeyInfo keyInfo = (PKCS8EncryptedPrivateKeyInfo) objectInPemFile;
-
-    // //Decrypt the private key
-    // String pwd = "secret";
-    // InputDecryptorProvider pkcs8Prov = new JceOpenSSLPKCS8DecryptorProviderBuilder().build(pwd.toCharArray());
-
-    // //Next statement raises an exception.
-    // PrivateKeyInfo privateKeyInfo = keyInfo.decryptPrivateKeyInfo(pkcs8Prov);
-    // }
 
     @Override
     public Certificate[] engineGetCertificateChain(String alias) {

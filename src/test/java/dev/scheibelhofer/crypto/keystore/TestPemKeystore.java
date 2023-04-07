@@ -89,8 +89,13 @@ public class TestPemKeystore {
     }
 
     @Test
-    public void testEncryptedPrivateKeyRSA() throws Exception {
+    public void testAes128EncryptedPrivateKeyRSA() throws Exception {
         checkPrivateKey("rsa-2048-aes128.pem", "PemKeyStore", "password".toCharArray(), RSAPrivateKey.class);
+    }
+
+    @Test
+    public void testAes256EncryptedPrivateKeyRSA() throws Exception {
+        checkPrivateKey("rsa-2048-aes256.pem", "PemKeyStore", "password".toCharArray(), RSAPrivateKey.class);
     }
 
     @Test
