@@ -170,7 +170,7 @@ public class PemKeystore extends KeyStoreSpi {
                     case x509Certificate: {
                         CertificateFactory cf = CertificateFactory.getInstance("X.509");         
                         X509Certificate cert = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(entry.encoding));
-                        String alias = generateAlias(cert);
+                        String alias = makeUniqueAlias(certificates.keySet(), cert.getSubjectX500Principal().getName());
                         certificates.put(alias, cert);
                         break;
                     }
@@ -204,17 +204,6 @@ public class PemKeystore extends KeyStoreSpi {
         Cipher nullCipher = Cipher.getInstance("null", CryptoSupportProvider.getInstance());
         nullCipher.init(Cipher.DECRYPT_MODE, new NullPrivateKey());
         return epki.getKeySpec(nullCipher);
-    }
-
-    private String generateAlias(Certificate c) {
-        String suggestedAlias;
-        if (c instanceof X509Certificate) {
-            X509Certificate xc = (X509Certificate) c;
-            suggestedAlias = xc.getSubjectX500Principal().getName();
-        } else {
-            suggestedAlias = "certificate-";
-        }
-        return makeUniqueAlias(certificates.keySet(), suggestedAlias);
     }
 
     private String makeUniqueAlias(Set<String> existingAliases, String suggestedAlias) {
