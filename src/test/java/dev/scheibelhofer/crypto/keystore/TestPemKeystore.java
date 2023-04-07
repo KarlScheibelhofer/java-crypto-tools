@@ -99,58 +99,18 @@ public class TestPemKeystore {
     }
 
     @Test
-    public void testPrivateKeyRSA() throws Exception {
-        CryptoSupportProvider prov = new CryptoSupportProvider();
-
-        KeyStore ks = KeyStore.getInstance("PemKeyStore", prov);
-        Assertions.assertNotNull(ks);
-        
-        ks.load(getResource("rsa-2048.pem"), null);
-        Assertions.assertEquals(1, ks.size());
-
-        Enumeration<String> aliasEnum = ks.aliases();
-        while (aliasEnum.hasMoreElements()) {
-            String alias = aliasEnum.nextElement();
-            if (ks.isKeyEntry(alias)) {
-                Key k = ks.getKey(alias, null);
-                Assertions.assertNotNull(k);
-                if (k instanceof RSAPrivateCrtKey) {
-                    RSAPrivateCrtKey rsaKey = (RSAPrivateCrtKey) k;
-                    Assertions.assertNotNull(rsaKey);
-                } else {
-                    Assertions.fail();
-                }
-            } else {
-                Assertions.fail();
-            }
-        }
+    public void testPlainPrivateKeyEC() throws Exception {
+        checkPrivateKey("ec-p256.pem", "PemKeyStore", null, ECPrivateKey.class);
     }
 
     @Test
-    public void testPrivateKeyEC() throws Exception {
-        CryptoSupportProvider prov = new CryptoSupportProvider();
-
-        KeyStore ks = KeyStore.getInstance("PemKeyStore", prov);
-        Assertions.assertNotNull(ks);
-        
-        ks.load(getResource("ec-p256.pem"), null);
-        Assertions.assertEquals(1, ks.size());
-
-        Enumeration<String> aliasEnum = ks.aliases();
-        while (aliasEnum.hasMoreElements()) {
-            String alias = aliasEnum.nextElement();
-            if (ks.isKeyEntry(alias)) {
-                Key k = ks.getKey(alias, null);
-                Assertions.assertNotNull(k);
-                if (k instanceof ECPrivateKey) {
-                    ECPrivateKey rsaKey = (ECPrivateKey) k;
-                    Assertions.assertNotNull(rsaKey);
-                } else {
-                    Assertions.fail();
-                }
-            } else {
-                Assertions.fail();
-            }
-        }
+    public void testAes128PrivateKeyEC() throws Exception {
+        checkPrivateKey("ec-p256-aes128.pem", "PemKeyStore", "password".toCharArray(), ECPrivateKey.class);
     }
+
+    @Test
+    public void testAes256PrivateKeyEC() throws Exception {
+        checkPrivateKey("ec-p256-aes256.pem", "PemKeyStore", "password".toCharArray(), ECPrivateKey.class);
+    }
+
 }
