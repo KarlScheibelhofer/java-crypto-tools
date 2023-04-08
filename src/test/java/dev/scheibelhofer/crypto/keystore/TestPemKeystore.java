@@ -122,10 +122,18 @@ public class TestPemKeystore {
 
     @Test
     public void testRsaKeystoreWithChain() throws Exception {
-        String keyStoreFile = "www.doesnotexist.org-RSA-keystore.pem";
+        checkKeystoreWithChain("RSA");
+    }
+
+    @Test
+    public void testEcKeystoreWithChain() throws Exception {
+        checkKeystoreWithChain("EC");
+    }
+
+    public void checkKeystoreWithChain(String algorithm) throws Exception {
+        String keyStoreFile = "www.doesnotexist.org-" + algorithm + "-keystore.pem";
         String keyStoreType = "PemKeyStore"; 
         char[] privateKeyPassword = "password".toCharArray();
-        Class<? extends PrivateKey> expectedPrivateKeyClass = RSAPrivateKey.class;
         
         KeyStore ks = KeyStore.getInstance(keyStoreType, CryptoSupportProvider.getInstance());
         Assertions.assertNotNull(ks);
@@ -143,15 +151,15 @@ public class TestPemKeystore {
         }
         Key k = ks.getKey(alias, privateKeyPassword);
         Assertions.assertNotNull(k);
-        if (!expectedPrivateKeyClass.isAssignableFrom(k.getClass())) {
+        if ( !(k instanceof PrivateKey)) {
             Assertions.fail();
         }
         
         List<Certificate> certChain = Arrays.asList(ks.getCertificateChain(alias));
         List<Certificate> expectedCertChain = List.of(
-            getRessourceCertificate("www.doesnotexist.org-RSA.crt"),
-            getRessourceCertificate("Test-Intermediate-CA-RSA.crt"),
-            getRessourceCertificate("Test-Root-CA-RSA.crt")
+            getRessourceCertificate("www.doesnotexist.org-" + algorithm + ".crt"),
+            getRessourceCertificate("Test-Intermediate-CA-" + algorithm + ".crt"),
+            getRessourceCertificate("Test-Root-CA-" + algorithm + ".crt")
             );
         Assertions.assertEquals(expectedCertChain, certChain);
             

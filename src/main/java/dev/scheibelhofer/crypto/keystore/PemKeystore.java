@@ -14,6 +14,7 @@ import java.security.KeyStoreSpi;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.Signature;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -216,7 +217,19 @@ public class PemKeystore extends KeyStoreSpi {
     }
 
     public static boolean matching(ECPublicKey publicKey, ECPrivateKey privateKey) {
-        return publicKey.getParams().getGenerator().equals(privateKey.getParams().getGenerator());
+        try {
+            // I found no better way using only Java standard API without additional dependency
+            byte[] data = new byte[32];
+            Signature s = Signature.getInstance("SHA256withECDSA");
+            s.initSign(privateKey);
+            s.update(data);
+            byte[] sig = s.sign();
+            s.initVerify(publicKey);
+            s.update(data);
+            return s.verify(sig);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public static boolean matching(RSAPublicKey publicKey, RSAPrivateKey privateKey) {
