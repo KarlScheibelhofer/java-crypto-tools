@@ -29,6 +29,9 @@ KeyStore ks = KeyStore.getInstance(keyStoreType, CryptoSupportProvider.getInstan
         
 ```
 
+Note that there is no need to install the `CryptoSupportProvider`. 
+This eliminates the risk that this provicer intereferres with existing ones.
+
 ## Resttrictions
 
 * For encrypted private keys, only AES password based encryption is supported. 
