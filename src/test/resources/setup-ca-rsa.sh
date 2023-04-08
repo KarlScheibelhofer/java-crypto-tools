@@ -24,3 +24,5 @@ subjectAltName=DNS:${_webserver_name}
 "
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "${_webserver_name}.pem" -pass pass:${_passowrd}
 openssl req -config <(echo "$_openssl_config") -x509 -new -nodes -CA "${_ca_inter_name}.crt" -CAkey "${_ca_inter_name}.pem" -key "${_webserver_name}.pem" -sha256 -days 366 -out "${_webserver_name}.crt" -subj "/CN=${_webserver_name}" -extensions ext
+
+cat www.doesnotexist.org.pem www.doesnotexist.org.crt Test-Intermediate-CA.crt Test-Root-CA.crt > rsa-keystore.pem

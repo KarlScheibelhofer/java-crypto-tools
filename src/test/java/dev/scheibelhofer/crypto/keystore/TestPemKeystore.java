@@ -112,4 +112,33 @@ public class TestPemKeystore {
         checkPrivateKey("ec-p256-aes256.pem", "PemKeyStore", "password".toCharArray(), ECPrivateKey.class);
     }
 
+    @Test
+    public void testRsaKeystoreWithChain() throws Exception {
+        String keyStoreFile = "rsa-keystore.pem";
+        String keyStoreType = "PemKeyStore"; 
+        char[] privateKeyPassword = "password".toCharArray();
+        Class<? extends PrivateKey> expectedPrivateKeyClass = RSAPrivateKey.class;
+        
+        KeyStore ks = KeyStore.getInstance(keyStoreType, CryptoSupportProvider.getInstance());
+        Assertions.assertNotNull(ks);
+        
+        ks.load(getResource(keyStoreFile), null);
+        Assertions.assertEquals(1, ks.size());
+
+        Enumeration<String> aliasEnum = ks.aliases();
+        while (aliasEnum.hasMoreElements()) {
+            String alias = aliasEnum.nextElement();
+            if (!ks.isKeyEntry(alias)) {
+                Assertions.fail();
+            }
+            Key k = ks.getKey(alias, privateKeyPassword);
+            Assertions.assertNotNull(k);
+            if (!expectedPrivateKeyClass.isAssignableFrom(k.getClass())) {
+                Assertions.fail();
+            }
+        }
+        
+        Assertions.fail("TODO check cert chain");
+    }
+
 }
