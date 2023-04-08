@@ -15,15 +15,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.UnrecoverableKeyException;
-import java.security.cert.CertPathBuilder;
-import java.security.cert.CertPathBuilderException;
-import java.security.cert.CertPathBuilderResult;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.PKIXBuilderParameters;
-import java.security.cert.TrustAnchor;
-import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
@@ -42,8 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import javax.crypto.Cipher;
 import javax.crypto.EncryptedPrivateKeyInfo;
@@ -95,8 +87,11 @@ public class PemKeystore extends KeyStoreSpi {
 
     @Override
     public Certificate[] engineGetCertificateChain(String alias) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'engineGetCertificateChain'");
+        List<X509Certificate> certChain = certificateChains.get(alias);
+        if (certChain == null) {
+            return null;
+        }
+        return certChain.toArray(new Certificate[certChain.size()]);
     }
 
     @Override
@@ -210,19 +205,22 @@ public class PemKeystore extends KeyStoreSpi {
         }                  
     }
 
-    public boolean matching(PublicKey publicKey, PrivateKey privateKey) {
+    public static boolean matching(PublicKey publicKey, PrivateKey privateKey) {
         if ((publicKey instanceof RSAPublicKey)  && (privateKey instanceof RSAPrivateKey)) {
-            RSAPublicKey rsaPublicKey = (RSAPublicKey) publicKey;
-            RSAPrivateKey rsaPrivateKey = (RSAPrivateKey) privateKey;
-            return rsaPublicKey.getModulus().equals(rsaPrivateKey.getModulus());
+            return matching((RSAPublicKey) publicKey, (RSAPrivateKey) privateKey);
         }
         if ((publicKey instanceof ECPublicKey)  && (privateKey instanceof ECPrivateKey)) {
-            ECPublicKey ecPublicKey = (ECPublicKey) publicKey;
-            ECPrivateKey ecPrivateKey = (ECPrivateKey) privateKey;
-            return ecPublicKey.getParams().getGenerator().equals(ecPrivateKey.getParams().getGenerator());
+            return matching((ECPublicKey) publicKey, (ECPrivateKey) privateKey);
         }
         return false;
-        // https://stackoverflow.com/questions/42639620/generate-ecpublickey-from-ecprivatekey
+    }
+
+    public static boolean matching(ECPublicKey publicKey, ECPrivateKey privateKey) {
+        return publicKey.getParams().getGenerator().equals(privateKey.getParams().getGenerator());
+    }
+
+    public static boolean matching(RSAPublicKey publicKey, RSAPrivateKey privateKey) {
+        return publicKey.getModulus().equals(privateKey.getModulus());
     }
 
     /** 
@@ -230,7 +228,6 @@ public class PemKeystore extends KeyStoreSpi {
      * @param certList list of all certificates found in the keystore.
      * @throws NoSuchAlgorithmException
      * @throws InvalidAlgorithmParameterException
-     * @throws CertPathBuilderException
      */
     private void buildCertChains(Set<X509Certificate> certList) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
         if (certList.isEmpty()) {
@@ -241,24 +238,7 @@ public class PemKeystore extends KeyStoreSpi {
             PrivateKey privateKey = privateKeys.get(alias);
             List<X509Certificate> certChain = buildChainFor(privateKey, certList);
             certificateChains.put(alias, certChain);
-        usedCertificates.addAll(certChain);
-            // Optional<X509Certificate> eeCertificate = certList.stream().filter(c -> matching(c.getPublicKey(), privateKey)).findFirst();
-            // if (eeCertificate.isEmpty()) {
-            //     continue;
-            // }
-            // CertPathBuilder cpb = CertPathBuilder.getInstance("PKIX");
-            // X509CertSelector certSelector = new X509CertSelector();
-            // certSelector.setCertificate(eeCertificate.get());
-            // Set<TrustAnchor> trustAnchors = certList.stream().map(c -> new TrustAnchor(c, null)).collect(Collectors.toSet());
-            // PKIXBuilderParameters params = new PKIXBuilderParameters(trustAnchors, certSelector);
-            // try {
-            //     CertPathBuilderResult cpbr = cpb.build(params);
-            //     X509Certificate[] certPath = cpbr.getCertPath().getCertificates().toArray(new X509Certificate[0]);
-            //     certificateChains.put(alias, certPath);
-            //     usedCertificates.addAll(Arrays.asList(certPath));
-            // } catch (CertPathBuilderException e) {
-            //     // ignore
-            // }
+            usedCertificates.addAll(certChain);
         }
         // avoid certificates already used in cert chains to show up as trusted certificates in addition
         certList.removeAll(usedCertificates);

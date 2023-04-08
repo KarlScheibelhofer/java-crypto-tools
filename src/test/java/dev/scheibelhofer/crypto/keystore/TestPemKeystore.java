@@ -1,6 +1,7 @@
 package dev.scheibelhofer.crypto.keystore;
 
 import java.io.InputStream;
+import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.PrivateKey;
@@ -9,8 +10,10 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Assertions;
@@ -22,6 +25,11 @@ public class TestPemKeystore {
 
     InputStream getResource(String name) {
         return getClass().getClassLoader().getResourceAsStream(name);
+    }
+    
+    X509Certificate getRessourceCertificate(String name) throws GeneralSecurityException {
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        return (X509Certificate) cf.generateCertificate(getResource(name));
     }
 
     @Test
@@ -126,19 +134,28 @@ public class TestPemKeystore {
         Assertions.assertEquals(1, ks.size());
 
         Enumeration<String> aliasEnum = ks.aliases();
-        while (aliasEnum.hasMoreElements()) {
-            String alias = aliasEnum.nextElement();
-            if (!ks.isKeyEntry(alias)) {
-                Assertions.fail();
-            }
-            Key k = ks.getKey(alias, privateKeyPassword);
-            Assertions.assertNotNull(k);
-            if (!expectedPrivateKeyClass.isAssignableFrom(k.getClass())) {
-                Assertions.fail();
-            }
+        if (!aliasEnum.hasMoreElements()) {
+            Assertions.fail();
+        }
+        String alias = aliasEnum.nextElement();
+        if (!ks.isKeyEntry(alias)) {
+            Assertions.fail();
+        }
+        Key k = ks.getKey(alias, privateKeyPassword);
+        Assertions.assertNotNull(k);
+        if (!expectedPrivateKeyClass.isAssignableFrom(k.getClass())) {
+            Assertions.fail();
         }
         
-        Assertions.fail("TODO check cert chain");
+        List<Certificate> certChain = Arrays.asList(ks.getCertificateChain(alias));
+        List<Certificate> expectedCertChain = List.of(
+            getRessourceCertificate("www.doesnotexist.org.crt"),
+            getRessourceCertificate("Test-Intermediate-CA.crt"),
+            getRessourceCertificate("Test-Root-CA.crt")
+            );
+        Assertions.assertEquals(expectedCertChain, certChain);
+            
+        Assertions.assertTrue(PemKeystore.matching(certChain.get(0).getPublicKey(), (PrivateKey) k));
     }
 
 }
