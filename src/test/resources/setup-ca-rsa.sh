@@ -2,15 +2,15 @@
 
 _passowrd="password"
 
-_ca_root_name="Test-Root-CA"
+_ca_root_name="Test-Root-CA-RSA"
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out "${_ca_root_name}.pem" -pass pass:${_passowrd}
 openssl req -x509 -new -nodes -key "${_ca_root_name}.pem" -sha256 -days 3650 -out "${_ca_root_name}.crt" -subj "/C=AT/CN=${_ca_root_name}"
 
-_ca_inter_name="Test-Intermediate-CA"
+_ca_inter_name="Test-Intermediate-CA-RSA"
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out "${_ca_inter_name}.pem" -pass pass:${_passowrd}
 openssl req -x509 -new -nodes -CA "${_ca_root_name}.crt" -CAkey "${_ca_root_name}.pem" -key "${_ca_inter_name}.pem" -sha256 -days 3000 -out "${_ca_inter_name}.crt" -subj "/C=AT/CN=${_ca_inter_name}"
 
-_webserver_name="www.doesnotexist.org"
+_webserver_name="www.doesnotexist.org-RSA"
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "${_webserver_name}.pem" -pass pass:${_passowrd}
 openssl req -x509 -new -nodes -CA "${_ca_inter_name}.crt" -CAkey "${_ca_inter_name}.pem" -key "${_webserver_name}.pem" -sha256 -days 366 -out "${_webserver_name}.crt" -subj "/CN=${_webserver_name}" -addext "basicConstraints=CA:FALSE" -addext "subjectAltName=DNS:${_webserver_name}"
 
@@ -25,4 +25,4 @@ subjectAltName=DNS:${_webserver_name}
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "${_webserver_name}.pem" -pass pass:${_passowrd}
 openssl req -config <(echo "$_openssl_config") -x509 -new -nodes -CA "${_ca_inter_name}.crt" -CAkey "${_ca_inter_name}.pem" -key "${_webserver_name}.pem" -sha256 -days 366 -out "${_webserver_name}.crt" -subj "/CN=${_webserver_name}" -extensions ext
 
-cat www.doesnotexist.org.pem www.doesnotexist.org.crt Test-Intermediate-CA.crt Test-Root-CA.crt > rsa-keystore.pem
+cat "${_webserver_name}.pem" "${_webserver_name}.crt" "${_ca_inter_name}.crt" "${_ca_root_name}.crt" > "${_webserver_name}-keystore.pem"

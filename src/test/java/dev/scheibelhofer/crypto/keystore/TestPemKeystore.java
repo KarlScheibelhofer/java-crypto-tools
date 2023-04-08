@@ -122,7 +122,7 @@ public class TestPemKeystore {
 
     @Test
     public void testRsaKeystoreWithChain() throws Exception {
-        String keyStoreFile = "rsa-keystore.pem";
+        String keyStoreFile = "www.doesnotexist.org-RSA-keystore.pem";
         String keyStoreType = "PemKeyStore"; 
         char[] privateKeyPassword = "password".toCharArray();
         Class<? extends PrivateKey> expectedPrivateKeyClass = RSAPrivateKey.class;
@@ -149,9 +149,9 @@ public class TestPemKeystore {
         
         List<Certificate> certChain = Arrays.asList(ks.getCertificateChain(alias));
         List<Certificate> expectedCertChain = List.of(
-            getRessourceCertificate("www.doesnotexist.org.crt"),
-            getRessourceCertificate("Test-Intermediate-CA.crt"),
-            getRessourceCertificate("Test-Root-CA.crt")
+            getRessourceCertificate("www.doesnotexist.org-RSA.crt"),
+            getRessourceCertificate("Test-Intermediate-CA-RSA.crt"),
+            getRessourceCertificate("Test-Root-CA-RSA.crt")
             );
         Assertions.assertEquals(expectedCertChain, certChain);
             
