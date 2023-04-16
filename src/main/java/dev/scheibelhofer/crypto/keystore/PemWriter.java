@@ -28,13 +28,12 @@ class PemWriter implements Closeable, Flushable {
 
     void writePemEntry(byte[] encoding, String beginLine, String endLine) {
         try {
-
             writer.write(beginLine);
-            writer.write("\r\n");
-            writer.write(Base64.getMimeEncoder().encodeToString(encoding));
-            writer.write("\r\n");
+            writer.write("\n");
+            writer.write(Base64.getMimeEncoder(64, new byte[] { 0x0a}).encodeToString(encoding));
+            writer.write("\n");
             writer.write(endLine);
-            writer.write("\r\n");
+            writer.write("\n");
         } catch (IOException e) {
             throw new PemKeystoreException("failed writing PEM entry", e);
         }
