@@ -256,12 +256,12 @@ public class PemKeystore extends KeyStoreSpi {
         Pem.CertificateEntry cert = privateKeyCertificate.orElse(null);
         while (cert != null) {
             final Pem.CertificateEntry currentCertEntry = cert;
-            // byte[] authorityKeyID = currentCert.getExtensionValue(AUTHORITY_KEY_ID);
+            byte[] authorityKeyID = currentCertEntry.certificate.getExtensionValue(AUTHORITY_KEY_ID);
             certChain.add(currentCertEntry);
             cert = certList.stream()
                 .filter(ce -> !ce.equals(currentCertEntry))
                 .filter(ce -> ce.certificate.getSubjectX500Principal().equals(currentCertEntry.certificate.getIssuerX500Principal()))
-                // .filter(c -> matchingKeyIDs(authorityKeyID, c))
+                .filter(ce -> matchingKeyIDs(authorityKeyID, ce.certificate))
                 .findFirst().orElse(null);
         }
         return certChain;
@@ -276,7 +276,8 @@ public class PemKeystore extends KeyStoreSpi {
             return true;
         }
 
-        return Arrays.equals(authorityKeyID, certSubjectKeyId);
+        // check that trailing 20 bytes (sha1) match
+        return Arrays.equals(authorityKeyID, authorityKeyID.length - 20, authorityKeyID.length, certSubjectKeyId, certSubjectKeyId.length - 20, certSubjectKeyId.length);
     }
 
     private String makeUniqueAlias(Set<String> existingAliases, String suggestedAlias) {
