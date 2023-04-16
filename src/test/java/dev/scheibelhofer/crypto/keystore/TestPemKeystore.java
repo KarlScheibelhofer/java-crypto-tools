@@ -1,6 +1,11 @@
 package dev.scheibelhofer.crypto.keystore;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyStore;
@@ -91,42 +96,42 @@ public class TestPemKeystore {
     }
 
     @Test
-    public void testPlainPrivateKeyRSA() throws Exception {
+    public void testLoadPlainPrivateKeyRSA() throws Exception {
         checkPrivateKey("rsa-2048.pem", "PemKeyStore", null, RSAPrivateKey.class);
     }
 
     @Test
-    public void testAes128EncryptedPrivateKeyRSA() throws Exception {
+    public void testLoadAes128EncryptedPrivateKeyRSA() throws Exception {
         checkPrivateKey("rsa-2048-aes128.pem", "PemKeyStore", "password".toCharArray(), RSAPrivateKey.class);
     }
 
     @Test
-    public void testAes256EncryptedPrivateKeyRSA() throws Exception {
+    public void testLoadAes256EncryptedPrivateKeyRSA() throws Exception {
         checkPrivateKey("rsa-2048-aes256.pem", "PemKeyStore", "password".toCharArray(), RSAPrivateKey.class);
     }
 
     @Test
-    public void testPlainPrivateKeyEC() throws Exception {
+    public void testLoadPlainPrivateKeyEC() throws Exception {
         checkPrivateKey("ec-p256.pem", "PemKeyStore", null, ECPrivateKey.class);
     }
 
     @Test
-    public void testAes128PrivateKeyEC() throws Exception {
+    public void testLoadAes128PrivateKeyEC() throws Exception {
         checkPrivateKey("ec-p256-aes128.pem", "PemKeyStore", "password".toCharArray(), ECPrivateKey.class);
     }
 
     @Test
-    public void testAes256PrivateKeyEC() throws Exception {
+    public void testLoadAes256PrivateKeyEC() throws Exception {
         checkPrivateKey("ec-p256-aes256.pem", "PemKeyStore", "password".toCharArray(), ECPrivateKey.class);
     }
 
     @Test
-    public void testRsaKeystoreWithChain() throws Exception {
+    public void testLoadRsaKeystoreWithChain() throws Exception {
         checkKeystoreWithChain("RSA");
     }
 
     @Test
-    public void testEcKeystoreWithChain() throws Exception {
+    public void testLoadEcKeystoreWithChain() throws Exception {
         checkKeystoreWithChain("EC");
     }
 
@@ -166,4 +171,30 @@ public class TestPemKeystore {
         Assertions.assertTrue(PemKeystore.matching(certChain.get(0).getPublicKey(), (PrivateKey) k));
     }
 
+    @Test
+    public void testStoreRsaKeystoreWithChain() throws Exception {
+        File originalKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore.pem");
+        File savedKeystore = new File("src/test/resources/out/", originalKeystore.getName());
+        char[] password = "password".toCharArray();
+
+        KeyStore ks = loadKeyStore(originalKeystore, password);
+
+        try (FileOutputStream fos = new FileOutputStream(savedKeystore)) {
+            ks.store(fos, password);
+        } 
+
+        assertFilesEqual(originalKeystore, savedKeystore);
+    }
+    
+    private void assertFilesEqual(File expectedKeystore, File keystore) throws Exception {
+        String expectedContent = Files.readString(expectedKeystore.toPath(), StandardCharsets.UTF_8);
+        String content = Files.readString(keystore.toPath(), StandardCharsets.UTF_8);
+        Assertions.assertEquals(expectedContent, content);
+    }
+
+    private KeyStore loadKeyStore(File keyStoreFile, char[] password) throws Exception {
+        KeyStore ks = KeyStore.getInstance("PemKeyStore", CryptoSupportProvider.getInstance());
+        ks.load(new FileInputStream(keyStoreFile), password);
+        return ks;
+    }
 }
