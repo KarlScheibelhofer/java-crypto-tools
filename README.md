@@ -10,13 +10,16 @@ Requirements:
 
 The `PemKeyStore` reads a file containing multiple PEM entries of these types:
 
-* Certificates
+* X.509 Certificates
 * Private Keys
-* Encrypted Private Keys
+* Encrypted Private Keys (AES encryption)
  
 Features:
 
 * Supports RSA and EC keys
+
+The keystore file can contain multiple entries.
+The format of the entries are specified in https://www.rfc-editor.org/rfc/rfc7468.
 
 ## Usage
 

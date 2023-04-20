@@ -31,7 +31,7 @@ public class TestPemKeystore {
     InputStream getResource(String name) {
         return getClass().getClassLoader().getResourceAsStream(name);
     }
-    
+
     X509Certificate getRessourceCertificate(String name) throws GeneralSecurityException {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         return (X509Certificate) cf.generateCertificate(getResource(name));
@@ -43,7 +43,7 @@ public class TestPemKeystore {
 
         KeyStore ks = KeyStore.getInstance("PemKeyStore", prov);
         Assertions.assertNotNull(ks);
-        
+
         ks.load(getResource("truststore.pem"), null);
         Assertions.assertEquals(4, ks.size());
 
@@ -74,10 +74,11 @@ public class TestPemKeystore {
         }
     }
 
-    public void checkPrivateKey(String keyStoreFile, String keyStoreType, char[] privateKeyPassword, Class<? extends PrivateKey> expectedPrivateKeyClass) throws Exception {
+    public void checkPrivateKey(String keyStoreFile, String keyStoreType, char[] privateKeyPassword,
+            Class<? extends PrivateKey> expectedPrivateKeyClass) throws Exception {
         KeyStore ks = KeyStore.getInstance(keyStoreType, CryptoSupportProvider.getInstance());
         Assertions.assertNotNull(ks);
-        
+
         ks.load(getResource(keyStoreFile), null);
         Assertions.assertEquals(1, ks.size());
 
@@ -137,12 +138,12 @@ public class TestPemKeystore {
 
     public void checkKeystoreWithChain(String algorithm) throws Exception {
         String keyStoreFile = "www.doesnotexist.org-" + algorithm + "-keystore.pem";
-        String keyStoreType = "PemKeyStore"; 
+        String keyStoreType = "PemKeyStore";
         char[] privateKeyPassword = "password".toCharArray();
-        
+
         KeyStore ks = KeyStore.getInstance(keyStoreType, CryptoSupportProvider.getInstance());
         Assertions.assertNotNull(ks);
-        
+
         ks.load(getResource(keyStoreFile), null);
         Assertions.assertEquals(1, ks.size());
 
@@ -156,18 +157,17 @@ public class TestPemKeystore {
         }
         Key k = ks.getKey(alias, privateKeyPassword);
         Assertions.assertNotNull(k);
-        if ( !(k instanceof PrivateKey)) {
+        if (!(k instanceof PrivateKey)) {
             Assertions.fail();
         }
-        
+
         List<Certificate> certChain = Arrays.asList(ks.getCertificateChain(alias));
         List<Certificate> expectedCertChain = List.of(
-            getRessourceCertificate("www.doesnotexist.org-" + algorithm + ".crt"),
-            getRessourceCertificate("Test-Intermediate-CA-" + algorithm + ".crt"),
-            getRessourceCertificate("Test-Root-CA-" + algorithm + ".crt")
-            );
+                getRessourceCertificate("www.doesnotexist.org-" + algorithm + ".crt"),
+                getRessourceCertificate("Test-Intermediate-CA-" + algorithm + ".crt"),
+                getRessourceCertificate("Test-Root-CA-" + algorithm + ".crt"));
         Assertions.assertEquals(expectedCertChain, certChain);
-            
+
         Assertions.assertTrue(PemKeystore.matching(certChain.get(0).getPublicKey(), (PrivateKey) k));
     }
 
@@ -179,13 +179,14 @@ public class TestPemKeystore {
 
         KeyStore ks = loadKeyStore(originalKeystore, password);
 
+        savedKeystore.getParentFile().mkdirs();
         try (FileOutputStream fos = new FileOutputStream(savedKeystore)) {
             ks.store(fos, password);
-        } 
+        }
 
         assertFilesEqual(originalKeystore, savedKeystore);
     }
-    
+
     private void assertFilesEqual(File expectedKeystore, File keystore) throws Exception {
         String expectedContent = Files.readString(expectedKeystore.toPath(), StandardCharsets.UTF_8);
         String content = Files.readString(keystore.toPath(), StandardCharsets.UTF_8);
