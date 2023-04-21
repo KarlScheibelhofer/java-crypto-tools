@@ -172,6 +172,21 @@ public class TestPemKeystore {
     }
 
     @Test
+    public void testLoadRsaKeystoreChainAlias() throws Exception {
+        File originalKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore.pem");
+        char[] password = "password".toCharArray();
+        String expectedAlias = "CN=www.doesnotexist.org-RSA";
+
+        KeyStore ks = loadKeyStore(originalKeystore, password);
+
+        PrivateKey privateKey = (PrivateKey) ks.getKey(expectedAlias, null);
+        Assertions.assertNotNull(privateKey);
+
+        Certificate[] certChain = ks.getCertificateChain(expectedAlias);
+        Assertions.assertNotNull(certChain);
+    }
+
+    @Test
     public void testStoreRsaKeystoreWithChain() throws Exception {
         File originalKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore.pem");
         File savedKeystore = new File("src/test/resources/out/", originalKeystore.getName());

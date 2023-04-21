@@ -33,6 +33,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.security.auth.x500.X500Principal;
+
 import dev.scheibelhofer.crypto.keystore.Pem.CertificateEntry;
 import dev.scheibelhofer.crypto.keystore.Pem.PrivateKeyEntry;
 
@@ -69,7 +71,8 @@ public class PemKeystore extends KeyStoreSpi {
         if (certEntries == null) {
             return null;
         }
-        return certEntries.stream().map(ce -> ce.certificate).collect(Collectors.toList()).toArray(new Certificate[certEntries.size()]);
+        return certEntries.stream().map(ce -> ce.certificate).collect(Collectors.toList())
+                .toArray(new Certificate[certEntries.size()]);
     }
 
     @Override
@@ -123,7 +126,8 @@ public class PemKeystore extends KeyStoreSpi {
 
     @Override
     public boolean engineContainsAlias(String alias) {
-        return certificates.containsKey(alias) || privateKeys.containsKey(alias) || encryptedPrivateKeys.containsKey(alias);
+        return certificates.containsKey(alias) || privateKeys.containsKey(alias)
+                || encryptedPrivateKeys.containsKey(alias);
     }
 
     @Override
@@ -171,16 +175,18 @@ public class PemKeystore extends KeyStoreSpi {
                         break;
                     }
                     case privateKey: {
-                        privateKeys.put(makeUniqueAlias(privateKeys.keySet(), "private-key-"), (PrivateKeyEntry) entry);                        
+                        privateKeys.put(makeUniqueAlias(privateKeys.keySet(), "private-key-"), (PrivateKeyEntry) entry);
                         break;
                     }
                     case encryptedPrivateKey: {
                         Pem.EncryptedPrivateKeyEntry epk = (Pem.EncryptedPrivateKeyEntry) entry;
-                        encryptedPrivateKeys.put(makeUniqueAlias(encryptedPrivateKeys.keySet(), "encrypted-private-key-"), epk);                        
+                        encryptedPrivateKeys
+                                .put(makeUniqueAlias(encryptedPrivateKeys.keySet(), "encrypted-private-key-"), epk);
                         try {
                             epk.decryptPrivateKey(password);
                         } catch (PemKeystoreException e) {
-                            // ignore at this point, the app can try later with a different password calling #engineGetKey
+                            // ignore at this point, the app can try later with a different password calling
+                            // #engineGetKey
                         }
                         break;
                     }
@@ -190,17 +196,18 @@ public class PemKeystore extends KeyStoreSpi {
             }
             buildCertChains(certList);
 
-            certList.stream().forEach(c -> certificates.put(makeUniqueAlias(certificates.keySet(), c.certificate.getSubjectX500Principal().getName()), c));
+            certList.stream().forEach(c -> certificates
+                    .put(makeUniqueAlias(certificates.keySet(), c.certificate.getSubjectX500Principal().getName()), c));
         } catch (PemKeystoreException | InvalidAlgorithmParameterException e) {
             throw new IOException("error loading key", e);
-        }                  
+        }
     }
 
     public static boolean matching(PublicKey publicKey, PrivateKey privateKey) {
-        if ((publicKey instanceof RSAPublicKey)  && (privateKey instanceof RSAPrivateKey)) {
+        if ((publicKey instanceof RSAPublicKey) && (privateKey instanceof RSAPrivateKey)) {
             return matching((RSAPublicKey) publicKey, (RSAPrivateKey) privateKey);
         }
-        if ((publicKey instanceof ECPublicKey)  && (privateKey instanceof ECPrivateKey)) {
+        if ((publicKey instanceof ECPublicKey) && (privateKey instanceof ECPrivateKey)) {
             return matching((ECPublicKey) publicKey, (ECPrivateKey) privateKey);
         }
         return false;
@@ -208,7 +215,8 @@ public class PemKeystore extends KeyStoreSpi {
 
     public static boolean matching(ECPublicKey publicKey, ECPrivateKey privateKey) {
         try {
-            // I found no better way using only Java standard API without additional dependency
+            // I found no better way using only Java standard API without additional
+            // dependency
             byte[] data = new byte[32];
             Signature s = Signature.getInstance("SHA256withECDSA");
             s.initSign(privateKey);
@@ -226,13 +234,16 @@ public class PemKeystore extends KeyStoreSpi {
         return publicKey.getModulus().equals(privateKey.getModulus());
     }
 
-    /** 
-     * Build certificate chains for existing private keys and remove used certificates from the list.
+    /**
+     * Build certificate chains for existing private keys and remove used
+     * certificates from the list.
+     * 
      * @param certList list of all certificates found in the keystore.
      * @throws NoSuchAlgorithmException
      * @throws InvalidAlgorithmParameterException
      */
-    private void buildCertChains(List<Pem.CertificateEntry> certList) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
+    private void buildCertChains(List<Pem.CertificateEntry> certList)
+            throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
         if (certList.isEmpty()) {
             return;
         }
@@ -240,18 +251,31 @@ public class PemKeystore extends KeyStoreSpi {
         for (String alias : privateKeys.keySet()) {
             Pem.PrivateKeyEntry privateKeyEntry = privateKeys.get(alias);
             List<Pem.CertificateEntry> certChain = buildChainFor(privateKeyEntry, certList);
-            certificateChains.put(alias, certChain);
-            usedCertificates.addAll(certChain);
+            if (certChain.size() > 0) {
+                String newAlias = makeAlias(certChain.get(0));
+                privateKeys.remove(alias);
+                privateKeys.put(newAlias, privateKeyEntry);
+                certificateChains.put(newAlias, certChain);
+                usedCertificates.addAll(certChain);
+            }
         }
-        // avoid certificates already used in cert chains to show up as trusted certificates in addition
+        // avoid certificates already used in cert chains to show up as trusted
+        // certificates in addition
         certList.removeAll(usedCertificates);
+    }
+
+    private String makeAlias(CertificateEntry certificateEntry) {
+        X500Principal subject = certificateEntry.certificate.getSubjectX500Principal();
+        return subject.getName();
     }
 
     static final String SUBJECT_KEY_ID = "2.5.29.14";
     static final String AUTHORITY_KEY_ID = "2.5.29.35";
 
-    private List<Pem.CertificateEntry> buildChainFor(Pem.PrivateKeyEntry privateKeyEntry, List<Pem.CertificateEntry> certList) {
-        Optional<Pem.CertificateEntry> privateKeyCertificate = certList.stream().filter(c -> matching(c.certificate.getPublicKey(), privateKeyEntry.privateKey)).findFirst();
+    private List<Pem.CertificateEntry> buildChainFor(Pem.PrivateKeyEntry privateKeyEntry,
+            List<Pem.CertificateEntry> certList) {
+        Optional<Pem.CertificateEntry> privateKeyCertificate = certList.stream()
+                .filter(c -> matching(c.certificate.getPublicKey(), privateKeyEntry.privateKey)).findFirst();
         List<Pem.CertificateEntry> certChain = new ArrayList<>(4);
         Pem.CertificateEntry cert = privateKeyCertificate.orElse(null);
         while (cert != null) {
@@ -259,10 +283,11 @@ public class PemKeystore extends KeyStoreSpi {
             byte[] authorityKeyID = currentCertEntry.certificate.getExtensionValue(AUTHORITY_KEY_ID);
             certChain.add(currentCertEntry);
             cert = certList.stream()
-                .filter(ce -> !ce.equals(currentCertEntry))
-                .filter(ce -> ce.certificate.getSubjectX500Principal().equals(currentCertEntry.certificate.getIssuerX500Principal()))
-                .filter(ce -> matchingKeyIDs(authorityKeyID, ce.certificate))
-                .findFirst().orElse(null);
+                    .filter(ce -> !ce.equals(currentCertEntry))
+                    .filter(ce -> ce.certificate.getSubjectX500Principal()
+                            .equals(currentCertEntry.certificate.getIssuerX500Principal()))
+                    .filter(ce -> matchingKeyIDs(authorityKeyID, ce.certificate))
+                    .findFirst().orElse(null);
         }
         return certChain;
     }
@@ -277,7 +302,8 @@ public class PemKeystore extends KeyStoreSpi {
         }
 
         // check that trailing 20 bytes (sha1) match
-        return Arrays.equals(authorityKeyID, authorityKeyID.length - 20, authorityKeyID.length, certSubjectKeyId, certSubjectKeyId.length - 20, certSubjectKeyId.length);
+        return Arrays.equals(authorityKeyID, authorityKeyID.length - 20, authorityKeyID.length, certSubjectKeyId,
+                certSubjectKeyId.length - 20, certSubjectKeyId.length);
     }
 
     private String makeUniqueAlias(Set<String> existingAliases, String suggestedAlias) {

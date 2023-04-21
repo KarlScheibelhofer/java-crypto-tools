@@ -32,8 +32,14 @@ KeyStore ks = KeyStore.getInstance(keyStoreType, CryptoSupportProvider.getInstan
         
 ```
 
-Note that there is no need to install the `CryptoSupportProvider`. 
+Note that there is no need to install the `CryptoSupportProvider` using `java.security.Security#addProvider(Provider)` or `java.security.Security#insertProviderAt(Provider,int)`. 
 This eliminates the risk that this provicer intereferres with existing ones.
+
+## Aliases
+
+The PEM format usualy does not contain names for its entries.
+This implementation generated key aliases on loading a keystore.
+For private key entries with associated certificate chains, the end entity's certificate subject DN in its RFC 2253 format is used as alias name of the entry.
 
 ## Resttrictions
 
