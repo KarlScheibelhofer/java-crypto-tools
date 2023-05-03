@@ -15,8 +15,11 @@ import java.util.List;
  */
 public class JctProvider extends Provider {
 
-    public static JctProvider prov;
+    private static JctProvider prov;
 
+    /**
+     * @return a singleton instance of this provider.
+     */
     public static final JctProvider getInstance() {
         if (prov == null) {
             synchronized (JctProvider.class) {
@@ -28,6 +31,9 @@ public class JctProvider extends Provider {
         return prov;
     }
 
+    /** 
+     * Default constructor required for JCA provider registration via class name. 
+     */
     public JctProvider() {
         super("JctProvider", "1.0", "JCT Provider supporting PEM keystore");
         putService(new Provider.Service(this, "KeyStore", "pem", PemKeystore.class.getName(), null, null));

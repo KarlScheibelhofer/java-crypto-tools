@@ -1,4 +1,4 @@
-package dev.scheibelhofer.crypto.keystore;
+package dev.scheibelhofer.crypto.provider;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,8 +24,6 @@ import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import dev.scheibelhofer.crypto.provider.JctProvider;
-import dev.scheibelhofer.crypto.provider.PemKeystore;
 
 public class TestPemKeystore {
 

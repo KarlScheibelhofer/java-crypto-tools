@@ -206,7 +206,7 @@ public class PemKeystore extends KeyStoreSpi {
         }
     }
 
-    public static boolean matching(PublicKey publicKey, PrivateKey privateKey) {
+    static boolean matching(PublicKey publicKey, PrivateKey privateKey) {
         if ((publicKey instanceof RSAPublicKey) && (privateKey instanceof RSAPrivateKey)) {
             return matching((RSAPublicKey) publicKey, (RSAPrivateKey) privateKey);
         }
@@ -216,7 +216,7 @@ public class PemKeystore extends KeyStoreSpi {
         return false;
     }
 
-    public static boolean matching(ECPublicKey publicKey, ECPrivateKey privateKey) {
+    static boolean matching(ECPublicKey publicKey, ECPrivateKey privateKey) {
         try {
             // I found no better way using only Java standard API without additional
             // dependency
@@ -233,7 +233,7 @@ public class PemKeystore extends KeyStoreSpi {
         }
     }
 
-    public static boolean matching(RSAPublicKey publicKey, RSAPrivateKey privateKey) {
+    static boolean matching(RSAPublicKey publicKey, RSAPrivateKey privateKey) {
         return publicKey.getModulus().equals(privateKey.getModulus());
     }
 
@@ -295,7 +295,7 @@ public class PemKeystore extends KeyStoreSpi {
         return certChain;
     }
 
-    public static boolean matchingKeyIDs(byte[] authorityKeyID, X509Certificate c) {
+    static boolean matchingKeyIDs(byte[] authorityKeyID, X509Certificate c) {
         if (authorityKeyID == null) {
             return true;
         }
