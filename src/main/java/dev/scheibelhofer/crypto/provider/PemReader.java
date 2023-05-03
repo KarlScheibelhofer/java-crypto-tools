@@ -10,7 +10,9 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-
+/**
+ * Reeading PEM entries from a stream.
+ */
 class PemReader implements Closeable {
 
     private BufferedReader reader;

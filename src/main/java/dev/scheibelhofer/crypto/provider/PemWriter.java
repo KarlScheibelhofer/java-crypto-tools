@@ -9,6 +9,9 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
+/**
+ * Writing PEM entries to a stream.
+ */
 class PemWriter implements Closeable, Flushable {
 
     private BufferedWriter writer;

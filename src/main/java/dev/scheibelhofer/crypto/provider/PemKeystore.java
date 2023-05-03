@@ -38,6 +38,9 @@ import javax.security.auth.x500.X500Principal;
 import dev.scheibelhofer.crypto.provider.Pem.CertificateEntry;
 import dev.scheibelhofer.crypto.provider.Pem.PrivateKeyEntry;
 
+/**
+ * KeyStore implementation for reading PEM format private keys and certificates.
+ */
 public class PemKeystore extends KeyStoreSpi {
 
     private Map<String, Pem.PrivateKeyEntry> privateKeys = new LinkedHashMap<>();

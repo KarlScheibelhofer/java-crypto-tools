@@ -19,6 +19,9 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
+/**
+ * Internal support class for reading and writing PEM format keys and certificates.
+ */
 class Pem {
 
     static class Entry {

@@ -5,6 +5,9 @@ import java.security.AlgorithmParametersSpi;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidParameterSpecException;
 
+/**
+ * Dummy AlgorithmParameters needed internally, see {@link Pem.PrivateKeyEntry#initFromEncoding(byte[])}. 
+ */
 public class NullAlgorithmParameters extends AlgorithmParametersSpi {
 
     @Override

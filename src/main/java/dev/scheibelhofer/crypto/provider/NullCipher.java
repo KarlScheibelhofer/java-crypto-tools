@@ -15,6 +15,9 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.ShortBufferException;
 
+/**
+ * Dummy Cipher needed internally, see {@link Pem.PrivateKeyEntry#initFromEncoding(byte[])}. 
+ */
 public class NullCipher extends CipherSpi {
 
     @Override

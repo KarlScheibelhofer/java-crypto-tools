@@ -3,6 +3,16 @@ package dev.scheibelhofer.crypto.provider;
 import java.security.Provider;
 import java.util.List;
 
+/**
+ * Java Crypto Tools Provider supporting PEM keystore.
+ * 
+ * Typical usage:
+ * <code>
+ * import dev.scheibelhofer.crypto.provider.CryptoSupportProvider;
+ * 
+ * KeyStore ks = KeyStore.getInstance("pem", CryptoSupportProvider.getInstance());
+ * </code>
+ */
 public class JctProvider extends Provider {
 
     public static JctProvider prov;
