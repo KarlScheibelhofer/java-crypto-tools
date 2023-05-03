@@ -1,5 +1,7 @@
 # java-crypto-tools
 
+[![Maven Central](https://img.shields.io/maven-central/v/dev.scheibelhofer/crypto-tools)](https://central.sonatype.com/artifact/dev.scheibelhofer/crypto-tools/)
+
 This library includes a JCA provider implementing a `PemKeyStore` for the JCA `KeyStore` API. 
 It allows reading (plain) private keys, certificates and encrypted private keys.
 
