@@ -3,6 +3,7 @@ package dev.scheibelhofer.crypto.provider;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -212,4 +213,24 @@ public class TestPemKeystore {
         ks.load(new FileInputStream(keyStoreFile), password);
         return ks;
     }
+
+    @Test
+    public void testLoadDes3PrivateKey() throws Exception {
+        // generated with: openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out private-key-des3.pem -pass pass:password -des3
+        File originalKeystore = new File("src/test/resources", "private-key-des3.pem");
+        char[] password = "password".toCharArray();
+        
+        try {
+            loadKeyStore(originalKeystore, password);
+            Assertions.fail();
+        } catch (IOException e) {
+            // that is expected du to unsupported Des3 encrypted private keys
+        }
+        
+        // converted with: openssl pkey -in private-key-des3.pem -passin pass:password -out private-key-aes128.pem -passout pass:password -aes128
+
+        File aesEncryptedKeystore = new File("src/test/resources", "private-key-aes128.pem");
+        loadKeyStore(aesEncryptedKeystore, password);
+    }
+
 }
