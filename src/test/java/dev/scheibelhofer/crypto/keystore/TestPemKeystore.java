@@ -24,7 +24,8 @@ import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import dev.scheibelhofer.crypto.provider.CryptoSupportProvider;
+import dev.scheibelhofer.crypto.provider.JctProvider;
+import dev.scheibelhofer.crypto.provider.PemKeystore;
 
 public class TestPemKeystore {
 
@@ -39,9 +40,9 @@ public class TestPemKeystore {
 
     @Test
     public void testLoadPemTruststore() throws Exception {
-        CryptoSupportProvider prov = new CryptoSupportProvider();
+        JctProvider prov = new JctProvider();
 
-        KeyStore ks = KeyStore.getInstance("PemKeyStore", prov);
+        KeyStore ks = KeyStore.getInstance("pem", prov);
         Assertions.assertNotNull(ks);
 
         ks.load(getResource("truststore.pem"), null);
@@ -76,7 +77,7 @@ public class TestPemKeystore {
 
     public void checkPrivateKey(String keyStoreFile, String keyStoreType, char[] privateKeyPassword,
             Class<? extends PrivateKey> expectedPrivateKeyClass) throws Exception {
-        KeyStore ks = KeyStore.getInstance(keyStoreType, CryptoSupportProvider.getInstance());
+        KeyStore ks = KeyStore.getInstance(keyStoreType, JctProvider.getInstance());
         Assertions.assertNotNull(ks);
 
         ks.load(getResource(keyStoreFile), null);
@@ -98,32 +99,32 @@ public class TestPemKeystore {
 
     @Test
     public void testLoadPlainPrivateKeyRSA() throws Exception {
-        checkPrivateKey("rsa-2048.pem", "PemKeyStore", null, RSAPrivateKey.class);
+        checkPrivateKey("rsa-2048.pem", "pem", null, RSAPrivateKey.class);
     }
 
     @Test
     public void testLoadAes128EncryptedPrivateKeyRSA() throws Exception {
-        checkPrivateKey("rsa-2048-aes128.pem", "PemKeyStore", "password".toCharArray(), RSAPrivateKey.class);
+        checkPrivateKey("rsa-2048-aes128.pem", "pem", "password".toCharArray(), RSAPrivateKey.class);
     }
 
     @Test
     public void testLoadAes256EncryptedPrivateKeyRSA() throws Exception {
-        checkPrivateKey("rsa-2048-aes256.pem", "PemKeyStore", "password".toCharArray(), RSAPrivateKey.class);
+        checkPrivateKey("rsa-2048-aes256.pem", "pem", "password".toCharArray(), RSAPrivateKey.class);
     }
 
     @Test
     public void testLoadPlainPrivateKeyEC() throws Exception {
-        checkPrivateKey("ec-p256.pem", "PemKeyStore", null, ECPrivateKey.class);
+        checkPrivateKey("ec-p256.pem", "pem", null, ECPrivateKey.class);
     }
 
     @Test
     public void testLoadAes128PrivateKeyEC() throws Exception {
-        checkPrivateKey("ec-p256-aes128.pem", "PemKeyStore", "password".toCharArray(), ECPrivateKey.class);
+        checkPrivateKey("ec-p256-aes128.pem", "pem", "password".toCharArray(), ECPrivateKey.class);
     }
 
     @Test
     public void testLoadAes256PrivateKeyEC() throws Exception {
-        checkPrivateKey("ec-p256-aes256.pem", "PemKeyStore", "password".toCharArray(), ECPrivateKey.class);
+        checkPrivateKey("ec-p256-aes256.pem", "pem", "password".toCharArray(), ECPrivateKey.class);
     }
 
     @Test
@@ -138,10 +139,10 @@ public class TestPemKeystore {
 
     public void checkKeystoreWithChain(String algorithm) throws Exception {
         String keyStoreFile = "www.doesnotexist.org-" + algorithm + "-keystore.pem";
-        String keyStoreType = "PemKeyStore";
+        String keyStoreType = "pem";
         char[] privateKeyPassword = "password".toCharArray();
 
-        KeyStore ks = KeyStore.getInstance(keyStoreType, CryptoSupportProvider.getInstance());
+        KeyStore ks = KeyStore.getInstance(keyStoreType, JctProvider.getInstance());
         Assertions.assertNotNull(ks);
 
         ks.load(getResource(keyStoreFile), null);
@@ -209,7 +210,7 @@ public class TestPemKeystore {
     }
 
     private KeyStore loadKeyStore(File keyStoreFile, char[] password) throws Exception {
-        KeyStore ks = KeyStore.getInstance("PemKeyStore", CryptoSupportProvider.getInstance());
+        KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
         ks.load(new FileInputStream(keyStoreFile), password);
         return ks;
     }

@@ -1,4 +1,4 @@
-package dev.scheibelhofer.crypto.keystore;
+package dev.scheibelhofer.crypto.provider;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -18,9 +18,6 @@ import javax.crypto.EncryptedPrivateKeyInfo;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
-
-import dev.scheibelhofer.crypto.provider.CryptoSupportProvider;
-import dev.scheibelhofer.crypto.provider.NullPrivateKey;
 
 class Pem {
 
@@ -77,9 +74,9 @@ class Pem {
         
         private PKCS8EncodedKeySpec createPkcs8KeySpec(byte[] encoding) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeySpecException, InvalidKeyException {
             // we must tweak around a litte to access the PKCS#8 decoding feature only available in EncryptedPrivateKeyInfo
-            AlgorithmParameters nullAlgorithmParam = AlgorithmParameters.getInstance("0.1", CryptoSupportProvider.getInstance());
+            AlgorithmParameters nullAlgorithmParam = AlgorithmParameters.getInstance("0.1", JctProvider.getInstance());
             EncryptedPrivateKeyInfo epki = new EncryptedPrivateKeyInfo(nullAlgorithmParam, encoding);
-            Cipher nullCipher = Cipher.getInstance("null", CryptoSupportProvider.getInstance());
+            Cipher nullCipher = Cipher.getInstance("null", JctProvider.getInstance());
             nullCipher.init(Cipher.DECRYPT_MODE, new NullPrivateKey());
             return epki.getKeySpec(nullCipher);
         }

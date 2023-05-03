@@ -1,4 +1,4 @@
-package dev.scheibelhofer.crypto.keystore;
+package dev.scheibelhofer.crypto.provider;
 
 public class PemKeystoreException extends RuntimeException {
 

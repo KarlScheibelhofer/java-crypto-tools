@@ -1,4 +1,4 @@
-package dev.scheibelhofer.crypto.keystore;
+package dev.scheibelhofer.crypto.provider;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,8 +35,8 @@ import java.util.stream.Collectors;
 
 import javax.security.auth.x500.X500Principal;
 
-import dev.scheibelhofer.crypto.keystore.Pem.CertificateEntry;
-import dev.scheibelhofer.crypto.keystore.Pem.PrivateKeyEntry;
+import dev.scheibelhofer.crypto.provider.Pem.CertificateEntry;
+import dev.scheibelhofer.crypto.provider.Pem.PrivateKeyEntry;
 
 public class PemKeystore extends KeyStoreSpi {
 

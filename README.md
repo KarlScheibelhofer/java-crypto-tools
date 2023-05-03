@@ -28,7 +28,7 @@ Typical useage:
 ```java
 import dev.scheibelhofer.crypto.provider.CryptoSupportProvider;
 
-KeyStore ks = KeyStore.getInstance(keyStoreType, CryptoSupportProvider.getInstance());
+KeyStore ks = KeyStore.getInstance("pem", CryptoSupportProvider.getInstance());
         
 ```
 
@@ -44,5 +44,5 @@ For private key entries with associated certificate chains, the end entity's cer
 ## Resttrictions
 
 * For encrypted private keys, only AES password based encryption is supported. 
-3-DES is unsupported due to lacking support in `EncryptedPrivateKeyInfo` of OpenJDK.
+  3-DES is unsupported due to lacking support in `EncryptedPrivateKeyInfo` of OpenJDK.
 * Only read methods of `KeyStore` are supported. Setting entries or saving are unsupported.

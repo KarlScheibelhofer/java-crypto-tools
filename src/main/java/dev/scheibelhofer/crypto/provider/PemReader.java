@@ -1,4 +1,4 @@
-package dev.scheibelhofer.crypto.keystore;
+package dev.scheibelhofer.crypto.provider;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
