@@ -23,13 +23,23 @@ The format of the entries are specified in https://www.rfc-editor.org/rfc/rfc746
 
 ## Usage
 
-Typical useage:
+Include the maven dependency in your `pom-xml`:
+
+```xml
+<dependency>
+  <groupId>dev.scheibelhofer</groupId>
+  <artifactId>crypto-tools</artifactId>
+  <version>0.0.1</version>
+</dependency>
+```
+
+Typical usage:
 
 ```java
 import dev.scheibelhofer.crypto.provider.CryptoSupportProvider;
 
 KeyStore ks = KeyStore.getInstance("pem", CryptoSupportProvider.getInstance());
-        
+ks.load(new FileInputStream("key-and-certificate.pem"), password);
 ```
 
 Note that there is no need to install the `CryptoSupportProvider` using `java.security.Security#addProvider(Provider)` or `java.security.Security#insertProviderAt(Provider,int)`. 
