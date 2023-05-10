@@ -8,6 +8,7 @@ import java.security.Key;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
@@ -61,6 +62,12 @@ class Pem {
         
         public PrivateKeyEntry() {
             super(Type.privateKey);
+        }
+        
+        public PrivateKeyEntry(PrivateKey privateKey) {
+            this();
+            this.privateKey = privateKey;
+            this.encoding = privateKey.getEncoded();
         }
         
         @Override
@@ -128,6 +135,17 @@ class Pem {
         
         public CertificateEntry() {
             super(Type.certificate);
+
+        }
+
+        public CertificateEntry(X509Certificate certificate) {
+            this();
+            this.certificate = certificate;
+            try {
+                this.encoding = certificate.getEncoded();
+            } catch (CertificateEncodingException e) {
+                throw new PemKeystoreException("failed encoding certificate", e);
+            }
         }
         
         @Override

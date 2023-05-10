@@ -7,8 +7,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
 import java.security.Key;
+import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
@@ -16,11 +18,17 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.crypto.Cipher;
+import javax.crypto.EncryptedPrivateKeyInfo;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -231,6 +239,58 @@ public class TestPemKeystore {
 
         File aesEncryptedKeystore = new File("src/test/resources", "private-key-aes128.pem");
         loadKeyStore(aesEncryptedKeystore, password);
+    }
+
+    @Test
+    public void testCreateRsaKeystoreWithChain() throws Exception {
+        KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
+        ks.load(null, null);
+
+        File certFile = new File("src/test/resources", "www.doesnotexist.org-RSA.crt");
+        File caCertFile = new File("src/test/resources", "Test-Intermediate-CA-RSA.crt");
+        File rootCertFile = new File("src/test/resources", "Test-Root-CA-RSA.crt");
+        File keyFile = new File("src/test/resources", "www.doesnotexist.org-RSA.pem");
+        File keystoreFile = new File("src/test/resources/out/", "www.doesnotexist.org-RSA-keystore-created.pem");
+        keystoreFile.getParentFile().mkdirs();
+        String password = "password";
+        String alias = "doesnoteexist.org";
+
+        PrivateKey privateKey = readPrivateKey(keyFile, "RSA", password);
+        X509Certificate certificate = readCertificate(certFile);
+        X509Certificate caCertificate = readCertificate(caCertFile);
+        X509Certificate rootCertificate = readCertificate(rootCertFile);
+
+        Certificate[] certChain = new Certificate[] { certificate, caCertificate, rootCertificate};
+        ks.setKeyEntry(alias, privateKey, null, certChain);
+
+        try (FileOutputStream fos = new FileOutputStream(keystoreFile)) {
+            ks.store(fos, password.toCharArray());
+        }
+
+        File extepctedKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore.pem");
+        assertFilesEqual(extepctedKeystore, keystoreFile);
+    }
+
+    private X509Certificate readCertificate(File certFile) throws Exception {
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        try (FileInputStream fis = new FileInputStream(certFile)) {
+            return (X509Certificate) cf.generateCertificate(fis);
+        }
+    }
+
+    private PrivateKey readPrivateKey(File keyFile, String algorithm, String password) throws Exception {
+        String pemKey = Files.readAllLines(keyFile.toPath()).stream().filter(s -> !s.startsWith("-----")).collect(Collectors.joining(""));
+        byte[] encoding = Base64.getDecoder().decode(pemKey);
+
+        AlgorithmParameters nullAlgorithmParam = AlgorithmParameters.getInstance("0.1", JctProvider.getInstance());
+        EncryptedPrivateKeyInfo epki = new EncryptedPrivateKeyInfo(nullAlgorithmParam, encoding);
+        Cipher nullCipher = Cipher.getInstance("null", JctProvider.getInstance());
+        nullCipher.init(Cipher.DECRYPT_MODE, new NullPrivateKey());
+        PKCS8EncodedKeySpec spec = epki.getKeySpec(nullCipher);
+
+        KeyFactory kf = KeyFactory.getInstance(spec.getAlgorithm());
+
+        return kf.generatePrivate(spec);
     }
 
 }

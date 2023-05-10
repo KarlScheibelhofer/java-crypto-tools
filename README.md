@@ -100,6 +100,28 @@ openssl pkey -in private-key-des3.pem -passin pass:password -out private-key-aes
 
 The `pem` keystore can load the converted `private-key-aes128.pem` encrypted with `aes128` and password `password`.
 
-### Read-Only Methods
+### Setting Keys and Storing
+
+Only basic setting of an unencrypted private key with certificate chain is supported. 
+For example:
+
+```java
+KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
+ks.load(null, null);
+
+PrivateKey privateKey = ...;
+X509Certificate certificate = ...;
+X509Certificate caCertificate = ...;
+X509Certificate rootCertificate = ...;
+
+Certificate[] certChain = new Certificate[] { certificate, caCertificate, rootCertificate};
+ks.setKeyEntry(alias, privateKey, null, certChain);
+
+File keystoreFile = ...;
+char[] password = ...;
+try (FileOutputStream fos = new FileOutputStream(keystoreFile)) {
+    ks.store(fos, password.toCharArray());    
+}
+```
 
 Only read methods of `KeyStore` are supported. Setting entries is unsupported.

@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -43,10 +44,17 @@ import dev.scheibelhofer.crypto.provider.Pem.PrivateKeyEntry;
  */
 public class PemKeystore extends KeyStoreSpi {
 
-    private Map<String, Pem.PrivateKeyEntry> privateKeys = new LinkedHashMap<>();
-    private Map<String, Pem.EncryptedPrivateKeyEntry> encryptedPrivateKeys = new LinkedHashMap<>();
-    private Map<String, List<Pem.CertificateEntry>> certificateChains = new LinkedHashMap<>();
-    private Map<String, Pem.CertificateEntry> certificates = new LinkedHashMap<>();
+    private final Map<String, Pem.PrivateKeyEntry> privateKeys = new LinkedHashMap<>();
+    private final Map<String, Pem.EncryptedPrivateKeyEntry> encryptedPrivateKeys = new LinkedHashMap<>();
+    private final Map<String, List<Pem.CertificateEntry>> certificateChains = new LinkedHashMap<>();
+    private final Map<String, Pem.CertificateEntry> certificates = new LinkedHashMap<>();
+
+    private void clearKeystore() {
+        privateKeys.clear();
+        encryptedPrivateKeys.clear();
+        certificateChains.clear();
+        certificates.clear();
+    }
 
     @Override
     public Key engineGetKey(String alias, char[] password) throws NoSuchAlgorithmException, UnrecoverableKeyException {
@@ -96,8 +104,17 @@ public class PemKeystore extends KeyStoreSpi {
     @Override
     public void engineSetKeyEntry(String alias, Key key, char[] password, Certificate[] chain)
             throws KeyStoreException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'engineSetKeyEntry'");
+        if (key instanceof PrivateKey) {
+            if (password == null) {
+                privateKeys.put(alias, new Pem.PrivateKeyEntry((PrivateKey) key));
+                List<Pem.CertificateEntry> certificateChain = Stream.of(chain)
+                    .filter(X509Certificate.class::isInstance)
+                    .map(X509Certificate.class::cast)
+                    .map(Pem.CertificateEntry::new)
+                    .collect(Collectors.toList());
+                certificateChains.put(alias, certificateChain);
+            }
+        }
     }
 
     @Override
@@ -168,6 +185,10 @@ public class PemKeystore extends KeyStoreSpi {
     @Override
     public void engineLoad(InputStream stream, char[] password)
             throws IOException, NoSuchAlgorithmException, CertificateException {
+        if (stream == null) {
+            clearKeystore();
+            return;
+        }
         try (PemReader pemReader = new PemReader(stream)) {
             List<Pem.CertificateEntry> certList = new LinkedList<>();
 
