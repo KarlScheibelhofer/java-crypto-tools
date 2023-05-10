@@ -35,13 +35,21 @@ Include the maven dependency in your `pom-xml`:
 </dependency>
 ```
 
+If you have private key and certificates in OpenSSL PEM format in separate files, 
+simply write them all together in a single file. 
+For example:
+
+```bash
+cat private-key.pem webserver-certificate.crt intermediate-ca-certificate.crt root-ca-certificate.crt > webserver-key-and-certificate-chain.pem
+```
+
 Typical usage:
 
 ```java
 import dev.scheibelhofer.crypto.provider.CryptoSupportProvider;
 
 KeyStore ks = KeyStore.getInstance("pem", CryptoSupportProvider.getInstance());
-ks.load(new FileInputStream("key-and-certificate.pem"), password);
+ks.load(new FileInputStream("webserver-key-and-certificate-chain.pem"), password);
 ```
 
 Note that there is no need to install the `CryptoSupportProvider` using `java.security.Security#addProvider(Provider)` or `java.security.Security#insertProviderAt(Provider,int)`. 
