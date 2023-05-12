@@ -21,7 +21,7 @@ Features:
 * Supports RSA and EC keys
 
 The keystore file can contain multiple entries.
-The format of the entries are specified in https://www.rfc-editor.org/rfc/rfc7468.
+The format of the entries are specified in [RFC 7468](https://www.rfc-editor.org/rfc/rfc7468).
 
 ## Usage
 
@@ -46,14 +46,74 @@ cat private-key.pem webserver-certificate.crt intermediate-ca-certificate.crt ro
 Typical usage:
 
 ```java
-import dev.scheibelhofer.crypto.provider.CryptoSupportProvider;
+import dev.scheibelhofer.crypto.provider.JctProvider;
 
-KeyStore ks = KeyStore.getInstance("pem", CryptoSupportProvider.getInstance());
+KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
 ks.load(new FileInputStream("webserver-key-and-certificate-chain.pem"), password);
 ```
 
-Note that there is no need to install the `CryptoSupportProvider` using `java.security.Security#addProvider(Provider)` or `java.security.Security#insertProviderAt(Provider,int)`. 
+Note that there is no need to install the `JctProvider` using `java.security.Security#addProvider(Provider)` or `java.security.Security#insertProviderAt(Provider,int)`. 
 This eliminates the risk that this provicer intereferres with existing ones.
+
+## Creating OpenSSL Keystores
+
+If you are familiar with OpenSSL keys and certificates, there is nothing new in this section.
+
+An OpenSSL keystore is jsut a plain text file, typically containing private key and certificates that comprise the certificate chain for the key.
+The private key can be unencrypte or encrypted based on a password.
+For encrypted private keys ensure that AES is used, e.g. using the `-aes128` option for OpenSSL.
+
+Special lines delimit the entries a such a keystore. 
+These boundary lines begin with `-----BEGIN` before an entry and with `-----BEGIN` ending an entry.
+In between these lines, there is [base-64](https://www.rfc-editor.org/rfc/rfc7468) encoded content of keys or certificates.
+
+This is the complete content of a valid PEM keystore file:
+
+```
+-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgC6Z/5UQUayiATltT
+gKqSGjfCslChP848q5K1kfho4J+hRANCAASSUlsdE9CoWwHcbrpqrU0DOOeKtWhW
+FUq6t+5zuLPZV8htXQnhHDa7l82/ab4rbjlaRUPaj0MMqjbd/DzKJWNF
+-----END PRIVATE KEY-----
+-----BEGIN CERTIFICATE-----
+MIIBujCCAV+gAwIBAgIUbwte5FfGHJEQ2iNjv7/Tu4btJe4wCgYIKoZIzj0EAwIw
+LzELMAkGA1UEBhMCQVQxIDAeBgNVBAMMF1Rlc3QtSW50ZXJtZWRpYXRlLUNBLUVD
+MB4XDTIzMDQwODE2NDIyOFoXDTI0MDQwODE2NDIyOFowIjEgMB4GA1UEAwwXd3d3
+LmRvZXNub3RleGlzdC5vcmctRUMwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASS
+UlsdE9CoWwHcbrpqrU0DOOeKtWhWFUq6t+5zuLPZV8htXQnhHDa7l82/ab4rbjla
+RUPaj0MMqjbd/DzKJWNFo2YwZDAiBgNVHREEGzAZghd3d3cuZG9lc25vdGV4aXN0
+Lm9yZy1FQzAdBgNVHQ4EFgQUybzeSXjHALSgPGI5BoueKoFwhtEwHwYDVR0jBBgw
+FoAUiekAtyaWnn8FUz+NbGBwg/hRu1cwCgYIKoZIzj0EAwIDSQAwRgIhAK3vGNB4
+F1YHRvBX+/NWF+g+TtzcFceuOVXJxvGhzmDmAiEA8QXltXLHpTP5JGz4jX06DWDj
+P7d4F6WeChLwcnJoTv0=
+-----END CERTIFICATE-----
+```
+
+To create a new EC P-256 key and protecting the private key using the password `topsecret` use somethins like this:
+
+```bash
+openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out webserver-private-key.pem -pass pass:topsecret -aes128
+```
+
+To generate a self-signed certficiate, which is sufficent for simple tests, you can use:
+
+```bash
+openssl req -x509 -new -key webserver-private-key.pem -passin pass:topsecret -addext subjectAltName=DNS:www.doesnotexist.org -addext "basicConstraints= critical, CA:false" -out webserver-certificate.pem -sha256 -days 3650 -subj "/CN=www.doesnotexist.org"
+```
+
+Then, you can create a PEM keystore including the private key and the certificate by simply concatenating them:
+
+```bash
+cat webserver-private-key.pem webserver-certificate.pem > webserver-keystore.pem
+```
+
+```java
+import dev.scheibelhofer.crypto.provider.JctProvider;
+
+char[] password = "topsecret".toCharArray();
+KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
+ks.load(new FileInputStream("webserver-keystore.pem"), password);
+```
 
 ## Aliases
 
