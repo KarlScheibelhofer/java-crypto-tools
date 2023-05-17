@@ -125,8 +125,12 @@ public class PemKeystore extends KeyStoreSpi {
 
     @Override
     public void engineSetCertificateEntry(String alias, Certificate cert) throws KeyStoreException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'engineSetCertificateEntry'");
+        if (!(cert instanceof X509Certificate)) {
+            throw new KeyStoreException("certificate entry must be of type java.security.cert.X509Certificate, but is " + cert.getClass());
+        }
+        X509Certificate x509Cert = (X509Certificate) cert;
+        Pem.CertificateEntry certEntry = new Pem.CertificateEntry(x509Cert);
+        certificates.put(alias, certEntry);
     }
 
     @Override

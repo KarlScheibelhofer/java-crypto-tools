@@ -170,7 +170,8 @@ The `pem` keystore can load the converted `private-key-aes128.pem` encrypted wit
 
 ### Setting Keys and Storing
 
-Only basic setting of an unencrypted private key with certificate chain is supported. 
+Only basic setting of an unencrypted private key with certificate chain and setting trusted certificate entries is supported. 
+
 For example:
 
 ```java
@@ -192,4 +193,15 @@ try (FileOutputStream fos = new FileOutputStream(keystoreFile)) {
 }
 ```
 
-Only read methods of `KeyStore` are supported. Setting entries is unsupported.
+### Unsupported Methods
+
+The following `java.security.KeyStore` Methods are unsupported:
+
+* `setKeyEntry(String alias, byte[] key, Certificate[] chain)`
+  * setting an encrypted key entry
+* `deleteEntry(String alias)`
+  * deleting an entry
+* `getCreationDate(String alias)`
+  * getting the creation date of an entry
+* `getCertificateAlias(Certificate cert)`
+  * getting the alias of a certificate entry

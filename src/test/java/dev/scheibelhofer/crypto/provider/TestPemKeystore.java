@@ -21,6 +21,7 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
@@ -271,14 +272,14 @@ public class TestPemKeystore {
         assertFilesEqual(extepctedKeystore, keystoreFile);
     }
 
-    private X509Certificate readCertificate(File certFile) throws Exception {
+    private static X509Certificate readCertificate(File certFile) throws Exception {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         try (FileInputStream fis = new FileInputStream(certFile)) {
             return (X509Certificate) cf.generateCertificate(fis);
         }
     }
 
-    private PrivateKey readPrivateKey(File keyFile, String algorithm, String password) throws Exception {
+    private static PrivateKey readPrivateKey(File keyFile, String algorithm, String password) throws Exception {
         String pemKey = Files.readAllLines(keyFile.toPath()).stream().filter(s -> !s.startsWith("-----")).collect(Collectors.joining(""));
         byte[] encoding = Base64.getDecoder().decode(pemKey);
 
@@ -291,6 +292,35 @@ public class TestPemKeystore {
         KeyFactory kf = KeyFactory.getInstance(spec.getAlgorithm());
 
         return kf.generatePrivate(spec);
+    }
+
+    @Test
+    public void testCreateTrustKeystore() throws Exception {
+        KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
+        ks.load(null, null);
+
+        List<File> caFileList = Arrays.asList(
+            new File("src/test/resources", "lets-encrypt-ca-R3.crt"),
+            new File("src/test/resources", "lets-encrypt-root-ISRG-Root-X1.crt"),
+            new File("src/test/resources", "Test-Intermediate-CA-RSA.crt"),
+            new File("src/test/resources", "Test-Root-CA-RSA.crt")
+        );
+
+        for (File certFile : caFileList) {
+            X509Certificate certificate = readCertificate(certFile);
+            String alias = certFile.getName().replaceFirst("[.][^.]+$", "");
+            ks.setCertificateEntry(alias, certificate);
+        }
+        
+        File keystoreFile = new File("src/test/resources/out/", "ca-truststore-created.pem");
+        keystoreFile.getParentFile().mkdirs();
+        String password = "password";
+        try (FileOutputStream fos = new FileOutputStream(keystoreFile)) {
+            ks.store(fos, password.toCharArray());
+        }
+
+        File extepctedKeystore = new File("src/test/resources", "ca-truststore.pem");
+        assertFilesEqual(extepctedKeystore, keystoreFile);
     }
 
 }
