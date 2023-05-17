@@ -1,5 +1,7 @@
 package dev.scheibelhofer.crypto.provider;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -321,6 +323,19 @@ public class TestPemKeystore {
 
         File extepctedKeystore = new File("src/test/resources", "ca-truststore.pem");
         assertFilesEqual(extepctedKeystore, keystoreFile);
+    }
+
+    @Test
+    public void testDeleteKeyAndChain() throws Exception {
+        File originalKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore.pem");
+        char[] password = "password".toCharArray();
+        String alias = "CN=www.doesnotexist.org-RSA";
+
+        KeyStore ks = loadKeyStore(originalKeystore, password);
+
+        ks.deleteEntry(alias);
+
+        assertFalse(ks.containsAlias(alias));
     }
 
 }

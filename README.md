@@ -199,9 +199,10 @@ The following `java.security.KeyStore` Methods are unsupported:
 
 * `setKeyEntry(String alias, byte[] key, Certificate[] chain)`
   * setting an encrypted key entry
-* `deleteEntry(String alias)`
-  * deleting an entry
+  * https://github.com/KarlScheibelhofer/java-crypto-tools/issues/6 
 * `getCreationDate(String alias)`
   * getting the creation date of an entry
+  * https://github.com/KarlScheibelhofer/java-crypto-tools/issues/5
 * `getCertificateAlias(Certificate cert)`
   * getting the alias of a certificate entry
+  * https://github.com/KarlScheibelhofer/java-crypto-tools/issues/4

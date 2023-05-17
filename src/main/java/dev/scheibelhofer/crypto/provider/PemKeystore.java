@@ -135,8 +135,10 @@ public class PemKeystore extends KeyStoreSpi {
 
     @Override
     public void engineDeleteEntry(String alias) throws KeyStoreException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'engineDeleteEntry'");
+        encryptedPrivateKeys.remove(alias);
+        privateKeys.remove(alias);
+        certificateChains.remove(alias);
+        certificates.remove(alias);
     }
 
     @Override
