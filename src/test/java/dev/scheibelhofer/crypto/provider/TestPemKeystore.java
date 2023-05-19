@@ -1,6 +1,7 @@
 package dev.scheibelhofer.crypto.provider;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,7 +24,7 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Collections;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
@@ -324,7 +325,7 @@ public class TestPemKeystore {
         File extepctedKeystore = new File("src/test/resources", "ca-truststore.pem");
         assertFilesEqual(extepctedKeystore, keystoreFile);
     }
-
+    
     @Test
     public void testDeleteKeyAndChain() throws Exception {
         File originalKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore.pem");
@@ -338,4 +339,17 @@ public class TestPemKeystore {
         assertFalse(ks.containsAlias(alias));
     }
 
+    @Test
+    public void testCreationDate() throws Exception {
+        File originalKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore.pem");
+        char[] password = "password".toCharArray();
+        String alias = "CN=www.doesnotexist.org-RSA";
+
+        KeyStore ks = loadKeyStore(originalKeystore, password);
+
+        Date creationDate = ks.getCreationDate(alias);
+
+        assertNotNull(creationDate);
+    }
+    
 }
