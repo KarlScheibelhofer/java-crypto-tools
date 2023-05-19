@@ -1,7 +1,9 @@
 package dev.scheibelhofer.crypto.provider;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,6 +24,7 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Date;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
@@ -350,6 +353,28 @@ public class TestPemKeystore {
         Date creationDate = ks.getCreationDate(alias);
 
         assertNotNull(creationDate);
+    }
+
+    @Test
+    public void testGetCertificateAlias() throws Exception {
+        File originalKeystore = new File("src/test/resources", "truststore.pem");
+        char[] password = "password".toCharArray();
+
+        KeyStore ks = loadKeyStore(originalKeystore, password);
+
+        boolean checked = false;
+        Enumeration<String> aliasEnum = ks.aliases();
+        while (aliasEnum.hasMoreElements()) {
+            String expectedAlias = aliasEnum.nextElement();
+            if (ks.isCertificateEntry(expectedAlias)) {
+                Certificate c = ks.getCertificate(expectedAlias);
+                String a = ks.getCertificateAlias(c);
+                assertEquals(expectedAlias, a);
+                // to ensure this loop checked at least one entry
+                checked = true;
+            }
+        }
+        assertTrue(checked);
     }
     
 }

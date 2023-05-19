@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -173,8 +174,25 @@ public class PemKeystore extends KeyStoreSpi {
 
     @Override
     public String engineGetCertificateAlias(Certificate cert) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'engineGetCertificateAlias'");
+        if (cert == null) {
+            return null;
+        }
+        for (Entry<String, CertificateEntry> entry : certificates.entrySet()) {
+            if (cert.equals(entry.getValue().certificate)) {
+                return entry.getKey();
+            }
+        }
+        for (Entry<String, List<CertificateEntry>> entry : certificateChains.entrySet()) {
+            List<CertificateEntry> chain = entry.getValue();
+            if (chain.size() == 0) {
+                continue;
+            }
+            CertificateEntry firstCertChainEntry = chain.get(0);
+            if (cert.equals(firstCertChainEntry.certificate)) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 
     @Override
