@@ -48,6 +48,7 @@ public class PemKeystore extends KeyStoreSpi {
     private final Map<String, Pem.EncryptedPrivateKeyEntry> encryptedPrivateKeys = new LinkedHashMap<>();
     private final Map<String, List<Pem.CertificateEntry>> certificateChains = new LinkedHashMap<>();
     private final Map<String, Pem.CertificateEntry> certificates = new LinkedHashMap<>();
+    private final Date creationDate = new Date();
 
     private void clearKeystore() {
         privateKeys.clear();
@@ -97,8 +98,7 @@ public class PemKeystore extends KeyStoreSpi {
 
     @Override
     public Date engineGetCreationDate(String alias) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'engineGetCreationDate'");
+        return this.creationDate;
     }
 
     @Override
