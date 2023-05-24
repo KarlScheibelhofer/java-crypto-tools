@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Reeading PEM entries from a stream.
@@ -36,8 +37,17 @@ class PemReader implements Closeable {
         StringBuilder sb = new StringBuilder(1024);
         String line;
         Pem.Entry entry = new Pem.Entry(Pem.Entry.Type.unknown);
+        String alias = null;
 
-        while ((line = reader.readLine()) != null && !line.startsWith(Pem.BEGIN));
+        while ((line = reader.readLine()) != null && !line.startsWith(Pem.BEGIN)) {
+            String trimmedLine = line.trim();
+            if (trimmedLine.isEmpty()) {
+                continue;
+            }
+            if (trimmedLine.toLowerCase(Locale.US).startsWith("alias:")) {
+                alias = trimmedLine.substring(trimmedLine.indexOf(':') + 1, trimmedLine.length()).trim();
+            }
+        }
 
         if (line != null) {
             switch (line) {
@@ -56,6 +66,7 @@ class PemReader implements Closeable {
             return null;
         }
         entry.initFromEncoding(Base64.getDecoder().decode(sb.toString()));
+        entry.alias = alias;
         return entry;
     }
 

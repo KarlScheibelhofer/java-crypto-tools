@@ -223,13 +223,13 @@ public class PemKeystore extends KeyStoreSpi {
                         break;
                     }
                     case privateKey: {
-                        privateKeys.put(makeUniqueAlias(privateKeys.keySet(), "private-key-"), (PrivateKeyEntry) entry);
+                        privateKeys.put(makeUniqueAlias(privateKeys.keySet(), entry), (PrivateKeyEntry) entry);
                         break;
                     }
                     case encryptedPrivateKey: {
                         Pem.EncryptedPrivateKeyEntry epk = (Pem.EncryptedPrivateKeyEntry) entry;
                         encryptedPrivateKeys
-                                .put(makeUniqueAlias(encryptedPrivateKeys.keySet(), "encrypted-private-key-"), epk);
+                                .put(makeUniqueAlias(encryptedPrivateKeys.keySet(), entry), epk);
                         try {
                             epk.decryptPrivateKey(password);
                         } catch (PemKeystoreException e) {
@@ -300,9 +300,14 @@ public class PemKeystore extends KeyStoreSpi {
             Pem.PrivateKeyEntry privateKeyEntry = privateKeys.get(alias);
             List<Pem.CertificateEntry> certChain = buildChainFor(privateKeyEntry, certList);
             if (certChain.size() > 0) {
-                String newAlias = makeAlias(certChain.get(0));
-                privateKeys.remove(alias);
-                privateKeys.put(newAlias, privateKeyEntry);
+                String newAlias;
+                if (privateKeyEntry.alias != null) {
+                    newAlias = alias;
+                } else {
+                    newAlias = makeAlias(certChain.get(0));
+                    privateKeys.remove(alias);
+                    privateKeys.put(newAlias, privateKeyEntry);
+                }
                 certificateChains.put(newAlias, certChain);
                 usedCertificates.addAll(certChain);
             }
@@ -358,10 +363,22 @@ public class PemKeystore extends KeyStoreSpi {
         String alias = suggestedAlias;
         int i = 0;
         while (existingAliases.contains(alias)) {
-            alias = suggestedAlias + i;
+            alias = suggestedAlias + "-" + i;
             i++;
         }
         return alias;
+    }
+
+    private String makeUniqueAlias(Set<String> aliasSet, Pem.Entry entry) {
+        if (entry.alias != null) {
+            return makeUniqueAlias(aliasSet, entry.alias);
+        }
+        if (entry instanceof Pem.PrivateKeyEntry) {
+            return makeUniqueAlias(aliasSet, "private-key");
+        } else if (entry instanceof Pem.EncryptedPrivateKeyEntry) {
+            return makeUniqueAlias(aliasSet, "encrypted-private-key");
+        } 
+        return makeUniqueAlias(aliasSet, "entry");
     }
 
 }

@@ -376,4 +376,21 @@ public class TestPemKeystore {
         assertTrue(checked);
     }
     
+    @Test
+    public void testReadAlias() throws Exception {
+        File originalKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore-alias.pem");
+        char[] password = "password".toCharArray();
+        String alias = "www.doesnotexist.org";
+
+        KeyStore ks = loadKeyStore(originalKeystore, password);
+
+        assertTrue(ks.isKeyEntry(alias));
+        Key pk = ks.getKey(alias, password);
+        assertNotNull(pk);
+        
+        Certificate[] cc = ks.getCertificateChain(alias);
+        assertNotNull(cc);
+        assertEquals(3, cc.length);
+    }
+
 }
