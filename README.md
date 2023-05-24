@@ -118,8 +118,24 @@ ks.load(new FileInputStream("webserver-keystore.pem"), password);
 ## Aliases
 
 The PEM format usualy does not contain names for its entries.
-This implementation generates artificial key aliases on loading a keystore.
+In this case, this implementation generates artificial key aliases on loading a keystore.
 For private key entries with associated certificate chains, the end entity's certificate subject DN in its RFC 2253 format is used as alias name of the entry.
+
+This implementation, however, supports setting special `Explanatory Text` lines with label `Alias:` before each keystore entry. 
+If there is such a line, its value is used as the alias of the following entry.
+
+Such an entry will look something like this:
+
+```
+Alias: www.doesnotexist.org
+-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgC6Z/5UQUayiATltT
+gKqSGjfCslChP848q5K1kfho4J+hRANCAASSUlsdE9CoWwHcbrpqrU0DOOeKtWhW
+FUq6t+5zuLPZV8htXQnhHDa7l82/ab4rbjlaRUPaj0MMqjbd/DzKJWNF
+-----END PRIVATE KEY-----
+```
+
+For private key entries with a certificate chain, it is sufficient, if the key has an alias. 
 
 ## Restrictions
 

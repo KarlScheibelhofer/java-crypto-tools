@@ -32,6 +32,7 @@ class Pem {
 
         Type type;
         byte[] encoding;
+        String alias;
 
         public Entry(Type type) {
             this.type = type;
