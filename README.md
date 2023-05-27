@@ -53,7 +53,7 @@ ks.load(new FileInputStream("webserver-key-and-certificate-chain.pem"), password
 ```
 
 Note that there is no need to install the `JctProvider` using `java.security.Security#addProvider(Provider)` or `java.security.Security#insertProviderAt(Provider,int)`. 
-This eliminates the risk that this provicer intereferres with existing ones.
+This eliminates the risk that this provicer interferes with existing ones.
 
 ## Creating OpenSSL Keystores
 
