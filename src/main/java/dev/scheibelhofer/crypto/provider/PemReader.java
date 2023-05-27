@@ -51,10 +51,10 @@ class PemReader implements Closeable {
 
         if (line != null) {
             switch (line) {
-                case Pem.BEGIN_CERTIFICATE:  entry = new Pem.CertificateEntry(); break;
-                case Pem.BEGIN_PRIVATE_KEY:  entry = new Pem.PrivateKeyEntry(); break;
-                case Pem.BEGIN_ENCRYPTED_PRIVATE_KEY:  entry = new Pem.EncryptedPrivateKeyEntry(); break;
-                default: entry = new Pem.UnknownEntry(line);
+                case Pem.BEGIN_CERTIFICATE:  entry = new Pem.CertificateEntry(alias); break;
+                case Pem.BEGIN_PRIVATE_KEY:  entry = new Pem.PrivateKeyEntry(alias); break;
+                case Pem.BEGIN_ENCRYPTED_PRIVATE_KEY:  entry = new Pem.EncryptedPrivateKeyEntry(alias); break;
+                default: entry = new Pem.UnknownEntry(alias, line);
             }
         }
 
@@ -66,7 +66,6 @@ class PemReader implements Closeable {
             return null;
         }
         entry.initFromEncoding(Base64.getDecoder().decode(sb.toString()));
-        entry.alias = alias;
         return entry;
     }
 
