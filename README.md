@@ -53,7 +53,7 @@ ks.load(new FileInputStream("webserver-key-and-certificate-chain.pem"), password
 ```
 
 Note that there is no need to install the `JctProvider` using `java.security.Security#addProvider(Provider)` or `java.security.Security#insertProviderAt(Provider,int)`. 
-This eliminates the risk that this provicer interferes with existing ones.
+This eliminates the risk that this provider interferes with existing ones.
 
 ## Creating OpenSSL Keystores
 
@@ -89,13 +89,13 @@ P7d4F6WeChLwcnJoTv0=
 -----END CERTIFICATE-----
 ```
 
-To create a new EC P-256 key and protecting the private key using the password `topsecret` use somethins like this:
+To create a new EC P-256 key and protecting the private key using the password `topsecret` use something like this:
 
 ```bash
 openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out webserver-private-key.pem -pass pass:topsecret -aes128
 ```
 
-To generate a self-signed certficiate, which is sufficent for simple tests, you can use:
+To generate a self-signed certificate, which is sufficient for simple tests, you can use:
 
 ```bash
 openssl req -x509 -new -key webserver-private-key.pem -passin pass:topsecret -addext subjectAltName=DNS:www.doesnotexist.org -addext "basicConstraints= critical, CA:false" -out webserver-certificate.pem -sha256 -days 3650 -subj "/CN=www.doesnotexist.org"
@@ -117,7 +117,7 @@ ks.load(new FileInputStream("webserver-keystore.pem"), password);
 
 ## Aliases
 
-The PEM format usualy does not contain names for its entries.
+The PEM format usually does not contain names for its entries.
 In this case, this implementation generates artificial key aliases on loading a keystore.
 For private key entries with associated certificate chains, the end entity's certificate subject DN in its RFC 2253 format is used as alias name of the entry.
 
@@ -178,7 +178,7 @@ Even new version can use `des3` if specified explicitely, e.g.:
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out private-key-des3.pem -pass pass:password -des3
 ```
 
-As a workaround, you may reencrypt the private key with AES like this:
+As a workaround, you may re-encrypt the private key with AES like this:
 
 ```
 openssl pkey -in private-key-des3.pem -passin pass:password -out private-key-aes128.pem -passout pass:password -aes128
