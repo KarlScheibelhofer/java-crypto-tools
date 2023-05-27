@@ -112,7 +112,7 @@ public class PemKeystore extends KeyStoreSpi {
                 List<Pem.CertificateEntry> certificateChain = Stream.of(chain)
                     .filter(X509Certificate.class::isInstance)
                     .map(X509Certificate.class::cast)
-                    .map(Pem.CertificateEntry::new)
+                    .map(c -> new Pem.CertificateEntry(alias, c))
                     .collect(Collectors.toList());
                 certificateChains.put(alias, certificateChain);
             }
@@ -131,7 +131,7 @@ public class PemKeystore extends KeyStoreSpi {
             throw new KeyStoreException("certificate entry must be of type java.security.cert.X509Certificate, but is " + cert.getClass());
         }
         X509Certificate x509Cert = (X509Certificate) cert;
-        Pem.CertificateEntry certEntry = new Pem.CertificateEntry(x509Cert);
+        Pem.CertificateEntry certEntry = new Pem.CertificateEntry(alias, x509Cert);
         certificates.put(alias, certEntry);
     }
 

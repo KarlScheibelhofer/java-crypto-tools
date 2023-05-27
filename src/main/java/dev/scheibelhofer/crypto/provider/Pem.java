@@ -137,11 +137,11 @@ class Pem {
         
         public CertificateEntry() {
             super(Type.certificate);
-
         }
-
-        public CertificateEntry(X509Certificate certificate) {
+        
+        public CertificateEntry(String alias, X509Certificate certificate) {
             this();
+            this.alias = alias;
             this.certificate = certificate;
             try {
                 this.encoding = certificate.getEncoded();
