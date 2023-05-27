@@ -107,7 +107,8 @@ public class PemKeystore extends KeyStoreSpi {
             throws KeyStoreException {
         if (key instanceof PrivateKey) {
             if (password == null) {
-                privateKeys.put(alias, new Pem.PrivateKeyEntry((PrivateKey) key));
+                PrivateKeyEntry keyEntry = new Pem.PrivateKeyEntry(alias, (PrivateKey) key);
+                privateKeys.put(alias, keyEntry);
                 List<Pem.CertificateEntry> certificateChain = Stream.of(chain)
                     .filter(X509Certificate.class::isInstance)
                     .map(X509Certificate.class::cast)

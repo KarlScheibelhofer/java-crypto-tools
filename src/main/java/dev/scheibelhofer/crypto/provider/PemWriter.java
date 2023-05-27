@@ -22,15 +22,20 @@ class PemWriter implements Closeable, Flushable {
 
     void writeEntry(Pem.Entry entry) {
         switch (entry.type) {
-            case privateKey: writePemEntry(entry.encoding, Pem.BEGIN_PRIVATE_KEY, Pem.END_PRIVATE_KEY); break;
-            case encryptedPrivateKey: writePemEntry(entry.encoding, Pem.BEGIN_ENCRYPTED_PRIVATE_KEY, Pem.END_ENCRYPTED_PRIVATE_KEY); break;
-            case certificate: writePemEntry(entry.encoding, Pem.BEGIN_CERTIFICATE, Pem.END_CERTIFICATE); break;
-            case unknown: writePemEntry(entry.encoding, Pem.BEGIN_CERTIFICATE, Pem.END_CERTIFICATE); break;
+            case privateKey: writePemEntry(entry.alias, entry.encoding, Pem.BEGIN_PRIVATE_KEY, Pem.END_PRIVATE_KEY); break;
+            case encryptedPrivateKey: writePemEntry(entry.alias, entry.encoding, Pem.BEGIN_ENCRYPTED_PRIVATE_KEY, Pem.END_ENCRYPTED_PRIVATE_KEY); break;
+            case certificate: writePemEntry(entry.alias, entry.encoding, Pem.BEGIN_CERTIFICATE, Pem.END_CERTIFICATE); break;
+            case unknown: writePemEntry(entry.alias, entry.encoding, Pem.BEGIN_CERTIFICATE, Pem.END_CERTIFICATE); break;
         }
     }
 
-    void writePemEntry(byte[] encoding, String beginLine, String endLine) {
+    void writePemEntry(String alias, byte[] encoding, String beginLine, String endLine) {
         try {
+            if (alias != null) {
+                writer.write("Alias: ");
+                writer.write(alias);
+                writer.write("\n");
+            }
             writer.write(beginLine);
             writer.write("\n");
             writer.write(Base64.getMimeEncoder(64, new byte[] { 0x0a}).encodeToString(encoding));

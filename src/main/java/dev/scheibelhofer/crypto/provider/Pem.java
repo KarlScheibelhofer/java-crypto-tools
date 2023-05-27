@@ -65,8 +65,9 @@ class Pem {
             super(Type.privateKey);
         }
         
-        public PrivateKeyEntry(PrivateKey privateKey) {
+        public PrivateKeyEntry(String alias, PrivateKey privateKey) {
             this();
+            this.alias = alias;
             this.privateKey = privateKey;
             this.encoding = privateKey.getEncoded();
         }
