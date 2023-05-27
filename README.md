@@ -59,12 +59,12 @@ This eliminates the risk that this provicer interferes with existing ones.
 
 If you are familiar with OpenSSL keys and certificates, there is nothing new in this section.
 
-An OpenSSL keystore is jsut a plain text file, typically containing private key and certificates that comprise the certificate chain for the key.
-The private key can be unencrypte or encrypted based on a password.
+An OpenSSL keystore is just a plain text file, typically containing private key and certificates that comprise the certificate chain for the key.
+The private key can be unencrypted or encrypted based on a password.
 For encrypted private keys ensure that AES is used, e.g. using the `-aes128` option for OpenSSL.
 
-Special lines delimit the entries a such a keystore. 
-These boundary lines begin with `-----BEGIN` before an entry and with `-----BEGIN` ending an entry.
+Special lines delimit the entries in such a keystore. 
+These boundary lines start with `-----BEGIN` before an entry and with `-----BEGIN` ending an entry.
 In between these lines, there is [base-64](https://www.rfc-editor.org/rfc/rfc7468) encoded content of keys or certificates.
 
 This is the complete content of a valid PEM keystore file:
@@ -121,7 +121,7 @@ The PEM format usualy does not contain names for its entries.
 This implementation generates artificial key aliases on loading a keystore.
 For private key entries with associated certificate chains, the end entity's certificate subject DN in its RFC 2253 format is used as alias name of the entry.
 
-## Resttrictions
+## Restrictions
 
 ### Only AES Encrypted Private Keys
 
@@ -153,7 +153,7 @@ Caused by: java.io.IOException: PBE parameter parsing error: expecting the objec
  ... 76 more
 ```
 
-Old versions of openssl may used `des3` as default cipher for encrypting private keys.
+Old versions of openssl may use `des3` as default cipher for encrypting private keys.
 Even new version can use `des3` if specified explicitely, e.g.:
 
 ```
@@ -170,7 +170,7 @@ The `pem` keystore can load the converted `private-key-aes128.pem` encrypted wit
 
 ### Setting Keys and Storing
 
-Only basic setting of an unencrypted private key with certificate chain and setting trusted certificate entries is supported. 
+Setting a private key with certificate chain and setting trusted certificate entries is supported. 
 
 For example:
 
@@ -198,7 +198,7 @@ try (FileOutputStream fos = new FileOutputStream(keystoreFile)) {
 The following `java.security.KeyStore` Methods are unsupported:
 
 * `setKeyEntry(String alias, byte[] key, Certificate[] chain)`
-  * setting an encrypted key entry
+  * setting an already encoded key entry 
   * https://github.com/KarlScheibelhofer/java-crypto-tools/issues/6 
 * `getCertificateAlias(Certificate cert)`
   * getting the alias of a certificate entry
