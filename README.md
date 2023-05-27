@@ -137,6 +137,8 @@ FUq6t+5zuLPZV8htXQnhHDa7l82/ab4rbjlaRUPaj0MMqjbd/DzKJWNF
 
 For private key entries with a certificate chain, it is sufficient, if the key has an alias. 
 
+A line with `Alias: ` is also created when writing a keystore created in Java.
+
 ## Restrictions
 
 ### Only AES Encrypted Private Keys
@@ -216,6 +218,4 @@ The following `java.security.KeyStore` Methods are unsupported:
 * `setKeyEntry(String alias, byte[] key, Certificate[] chain)`
   * setting an already encoded key entry 
   * https://github.com/KarlScheibelhofer/java-crypto-tools/issues/6 
-* `getCertificateAlias(Certificate cert)`
-  * getting the alias of a certificate entry
-  * https://github.com/KarlScheibelhofer/java-crypto-tools/issues/4
+

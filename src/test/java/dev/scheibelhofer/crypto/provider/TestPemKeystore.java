@@ -259,7 +259,7 @@ public class TestPemKeystore {
         File keystoreFile = new File("src/test/resources/out/", "www.doesnotexist.org-RSA-keystore-created.pem");
         keystoreFile.getParentFile().mkdirs();
         String password = "password";
-        String alias = "doesnoteexist.org";
+        String alias = "www.doesnotexist.org";
 
         PrivateKey privateKey = readPrivateKey(keyFile, "RSA", password);
         X509Certificate certificate = readCertificate(certFile);
@@ -273,7 +273,7 @@ public class TestPemKeystore {
             ks.store(fos, password.toCharArray());
         }
 
-        File extepctedKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore.pem");
+        File extepctedKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore-alias.pem");
         assertFilesEqual(extepctedKeystore, keystoreFile);
     }
 
@@ -378,11 +378,11 @@ public class TestPemKeystore {
     
     @Test
     public void testReadAlias() throws Exception {
-        File originalKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore-alias.pem");
+        File keystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore-alias.pem");
         char[] password = "password".toCharArray();
         String alias = "www.doesnotexist.org";
 
-        KeyStore ks = loadKeyStore(originalKeystore, password);
+        KeyStore ks = loadKeyStore(keystore, password);
 
         assertTrue(ks.isKeyEntry(alias));
         Key pk = ks.getKey(alias, password);
@@ -392,5 +392,5 @@ public class TestPemKeystore {
         assertNotNull(cc);
         assertEquals(3, cc.length);
     }
-
+    
 }
