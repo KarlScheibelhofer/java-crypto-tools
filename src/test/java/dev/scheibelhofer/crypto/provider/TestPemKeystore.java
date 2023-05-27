@@ -256,8 +256,6 @@ public class TestPemKeystore {
         File caCertFile = new File("src/test/resources", "Test-Intermediate-CA-RSA.crt");
         File rootCertFile = new File("src/test/resources", "Test-Root-CA-RSA.crt");
         File keyFile = new File("src/test/resources", "www.doesnotexist.org-RSA.pem");
-        File keystoreFile = new File("src/test/resources/out/", "www.doesnotexist.org-RSA-keystore-created.pem");
-        keystoreFile.getParentFile().mkdirs();
         String password = "password";
         String alias = "www.doesnotexist.org";
 
@@ -265,10 +263,12 @@ public class TestPemKeystore {
         X509Certificate certificate = readCertificate(certFile);
         X509Certificate caCertificate = readCertificate(caCertFile);
         X509Certificate rootCertificate = readCertificate(rootCertFile);
-
+        
         Certificate[] certChain = new Certificate[] { certificate, caCertificate, rootCertificate};
         ks.setKeyEntry(alias, privateKey, null, certChain);
-
+        
+        File keystoreFile = new File("src/test/resources/out/", "www.doesnotexist.org-RSA-keystore-created.pem");
+        keystoreFile.getParentFile().mkdirs();
         try (FileOutputStream fos = new FileOutputStream(keystoreFile)) {
             ks.store(fos, password.toCharArray());
         }
@@ -392,5 +392,24 @@ public class TestPemKeystore {
         assertNotNull(cc);
         assertEquals(3, cc.length);
     }
-    
+
+    @Test
+    public void testStorePemTruststore() throws Exception {
+        KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
+        ks.load(null, null);
+
+        ks.setCertificateEntry("github.com", getRessourceCertificate("github.com.crt"));
+        ks.setCertificateEntry("google.com", getRessourceCertificate("google.com.crt"));
+        ks.setCertificateEntry("microsoft.com", getRessourceCertificate("microsoft.com.crt"));
+        ks.setCertificateEntry("orf.at", getRessourceCertificate("orf.at.crt"));
+
+        File truststoreFile = new File("src/test/resources/out/", "truststore-alias-created.pem");
+        try (FileOutputStream fos = new FileOutputStream(truststoreFile)) {
+            ks.store(fos, null);
+        }
+        
+        File expectedTruststoreFile = new File("src/test/resources/", "truststore-alias.pem");
+        assertFilesEqual(expectedTruststoreFile, truststoreFile);
+    }
+
 }
