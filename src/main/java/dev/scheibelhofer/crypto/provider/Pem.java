@@ -34,11 +34,16 @@ class Pem {
         byte[] encoding;
         String alias;
 
-        public Entry(Type type) {
+        Entry(Type type) {
             this.type = type;
         }
 
-        public Entry(Type type, byte[] encoding) {
+        Entry(Type type, String alias) {
+            this.type = type;
+            this.alias = alias;
+        }
+
+        Entry(Type type, byte[] encoding) {
             this.type = type;
             this.encoding = encoding;
         }
@@ -52,8 +57,8 @@ class Pem {
     static class UnknownEntry extends Entry {
         String pemBeginLine;
         
-        public UnknownEntry(String pemBeginLine) {
-            super(Type.unknown);
+        UnknownEntry(String alias, String pemBeginLine) {
+            super(Type.unknown, alias);
             this.pemBeginLine = pemBeginLine;
         }
     }
@@ -61,13 +66,12 @@ class Pem {
     static class PrivateKeyEntry extends Entry {
         PrivateKey privateKey;
         
-        public PrivateKeyEntry() {
-            super(Type.privateKey);
+        PrivateKeyEntry(String alias) {
+            super(Type.privateKey, alias);
         }
         
-        public PrivateKeyEntry(String alias, PrivateKey privateKey) {
-            this();
-            this.alias = alias;
+        PrivateKeyEntry(String alias, PrivateKey privateKey) {
+            this(alias);
             this.privateKey = privateKey;
             this.encoding = privateKey.getEncoded();
         }
@@ -99,8 +103,8 @@ class Pem {
         EncryptedPrivateKeyInfo encryptedPrivateKey;
         PrivateKey privateKey;
 
-        public EncryptedPrivateKeyEntry() {
-            super(Type.encryptedPrivateKey);
+        EncryptedPrivateKeyEntry(String alias) {
+            super(Type.encryptedPrivateKey, alias);
         }
 
         @Override
@@ -135,13 +139,12 @@ class Pem {
     static class CertificateEntry extends Entry {
         X509Certificate certificate;
         
-        public CertificateEntry() {
-            super(Type.certificate);
+        CertificateEntry(String alias) {
+            super(Type.certificate, alias);
         }
         
-        public CertificateEntry(String alias, X509Certificate certificate) {
-            this();
-            this.alias = alias;
+        CertificateEntry(String alias, X509Certificate certificate) {
+            this(alias);
             this.certificate = certificate;
             try {
                 this.encoding = certificate.getEncoded();
