@@ -120,9 +120,16 @@ public class PemKeystore extends KeyStoreSpi {
     }
 
     @Override
-    public void engineSetKeyEntry(String alias, byte[] key, Certificate[] chain) throws KeyStoreException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'engineSetKeyEntry'");
+    public void engineSetKeyEntry(String alias, byte[] encryptedKey, Certificate[] chain) throws KeyStoreException {
+        Pem.EncryptedPrivateKeyEntry encryptedKeyEntry = new Pem.EncryptedPrivateKeyEntry(alias);
+        encryptedKeyEntry.initFromEncoding(encryptedKey);
+        encryptedPrivateKeys.put(alias, encryptedKeyEntry);
+        List<Pem.CertificateEntry> certificateChain = Stream.of(chain)
+            .filter(X509Certificate.class::isInstance)
+            .map(X509Certificate.class::cast)
+            .map(c -> new Pem.CertificateEntry(alias, c))
+            .collect(Collectors.toList());
+        certificateChains.put(alias, certificateChain);
     }
 
     @Override
