@@ -46,7 +46,7 @@ public class TestPemKeystore {
         return getClass().getClassLoader().getResourceAsStream(name);
     }
 
-    X509Certificate getRessourceCertificate(String name) throws GeneralSecurityException {
+    X509Certificate getResourceCertificate(String name) throws GeneralSecurityException {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         return (X509Certificate) cf.generateCertificate(getResource(name));
     }
@@ -177,9 +177,9 @@ public class TestPemKeystore {
 
         List<Certificate> certChain = Arrays.asList(ks.getCertificateChain(alias));
         List<Certificate> expectedCertChain = List.of(
-                getRessourceCertificate("www.doesnotexist.org-" + algorithm + ".crt"),
-                getRessourceCertificate("Test-Intermediate-CA-" + algorithm + ".crt"),
-                getRessourceCertificate("Test-Root-CA-" + algorithm + ".crt"));
+                getResourceCertificate("www.doesnotexist.org-" + algorithm + ".crt"),
+                getResourceCertificate("Test-Intermediate-CA-" + algorithm + ".crt"),
+                getResourceCertificate("Test-Root-CA-" + algorithm + ".crt"));
         Assertions.assertEquals(expectedCertChain, certChain);
 
         Assertions.assertTrue(PemKeystore.matching(certChain.get(0).getPublicKey(), (PrivateKey) k));
@@ -273,8 +273,8 @@ public class TestPemKeystore {
             ks.store(fos, password.toCharArray());
         }
 
-        File extepctedKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore-alias.pem");
-        assertFilesEqual(extepctedKeystore, keystoreFile);
+        File expectedKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore-alias.pem");
+        assertFilesEqual(expectedKeystore, keystoreFile);
     }
 
     private static X509Certificate readCertificate(File certFile) throws Exception {
@@ -324,8 +324,8 @@ public class TestPemKeystore {
             ks.store(fos, password.toCharArray());
         }
 
-        File extepctedKeystore = new File("src/test/resources", "ca-truststore.pem");
-        assertFilesEqual(extepctedKeystore, keystoreFile);
+        File expectedKeystore = new File("src/test/resources", "ca-truststore.pem");
+        assertFilesEqual(expectedKeystore, keystoreFile);
     }
     
     @Test
@@ -398,10 +398,10 @@ public class TestPemKeystore {
         KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
         ks.load(null, null);
 
-        ks.setCertificateEntry("github.com", getRessourceCertificate("github.com.crt"));
-        ks.setCertificateEntry("google.com", getRessourceCertificate("google.com.crt"));
-        ks.setCertificateEntry("microsoft.com", getRessourceCertificate("microsoft.com.crt"));
-        ks.setCertificateEntry("orf.at", getRessourceCertificate("orf.at.crt"));
+        ks.setCertificateEntry("github.com", getResourceCertificate("github.com.crt"));
+        ks.setCertificateEntry("google.com", getResourceCertificate("google.com.crt"));
+        ks.setCertificateEntry("microsoft.com", getResourceCertificate("microsoft.com.crt"));
+        ks.setCertificateEntry("orf.at", getResourceCertificate("orf.at.crt"));
 
         File truststoreFile = new File("src/test/resources/out/", "truststore-alias-created.pem");
         try (FileOutputStream fos = new FileOutputStream(truststoreFile)) {
@@ -410,6 +410,42 @@ public class TestPemKeystore {
         
         File expectedTruststoreFile = new File("src/test/resources/", "truststore-alias.pem");
         assertFilesEqual(expectedTruststoreFile, truststoreFile);
+    }
+
+    private static byte[] readPemData(File pemFile) throws Exception {
+        String pemKey = Files.readAllLines(pemFile.toPath()).stream().filter(s -> !s.startsWith("-----")).collect(Collectors.joining(""));
+        return Base64.getDecoder().decode(pemKey);
+    }
+
+    @Test
+    public void testStoreEncryptedRSAKey() throws Exception {
+        KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
+        ks.load(null, null);
+
+        File certFile = new File("src/test/resources", "www.doesnotexist.org-RSA.crt");
+        File caCertFile = new File("src/test/resources", "Test-Intermediate-CA-RSA.crt");
+        File rootCertFile = new File("src/test/resources", "Test-Root-CA-RSA.crt");
+        File keyFile = new File("src/test/resources", "www.doesnotexist.org-RSA-enc.pem");
+        String password = "password";
+        String alias = "www.doesnotexist.org";
+
+        byte[] encryptedPrivateKey = readPemData(keyFile);
+        X509Certificate certificate = readCertificate(certFile);
+        X509Certificate caCertificate = readCertificate(caCertFile);
+        X509Certificate rootCertificate = readCertificate(rootCertFile);
+        
+        Certificate[] certChain = new Certificate[] { certificate, caCertificate, rootCertificate};
+
+        ks.setKeyEntry(alias, encryptedPrivateKey, certChain);
+        
+        File keystoreFile = new File("src/test/resources/out/", "www.doesnotexist.org-RSA-enc-keystore-created.pem");
+        keystoreFile.getParentFile().mkdirs();
+        try (FileOutputStream fos = new FileOutputStream(keystoreFile)) {
+            ks.store(fos, password.toCharArray());
+        }
+
+        File expectedKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-enc-keystore.pem");
+        assertFilesEqual(expectedKeystore, keystoreFile);
     }
 
 }

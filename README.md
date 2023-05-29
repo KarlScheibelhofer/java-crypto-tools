@@ -210,12 +210,3 @@ try (FileOutputStream fos = new FileOutputStream(keystoreFile)) {
     ks.store(fos, password.toCharArray());    
 }
 ```
-
-### Unsupported Methods
-
-The following `java.security.KeyStore` Methods are unsupported:
-
-* `setKeyEntry(String alias, byte[] key, Certificate[] chain)`
-  * setting an already encoded key entry 
-  * https://github.com/KarlScheibelhofer/java-crypto-tools/issues/6 
-
