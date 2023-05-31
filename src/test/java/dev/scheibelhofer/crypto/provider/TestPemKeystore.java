@@ -37,6 +37,7 @@ import javax.crypto.Cipher;
 import javax.crypto.EncryptedPrivateKeyInfo;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 
@@ -478,4 +479,9 @@ public class TestPemKeystore {
         }
     }
 
+    @Test
+    @Disabled
+    public void loadTruststoreFolder() throws Exception {
+        Assertions.fail();
+    }
 }
