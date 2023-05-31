@@ -5,6 +5,8 @@
 This library includes a JCA provider implementing a `PemKeyStore` for the JCA `KeyStore` API. 
 It allows reading (plain) private keys, certificates and encrypted private keys.
 
+It enables  easy integration of PEM keystores like the PEM version of the Common CA Database from Mozilla.
+
 Requirements:
 * Java 11 or higher
 
@@ -54,6 +56,17 @@ ks.load(new FileInputStream("webserver-key-and-certificate-chain.pem"), password
 
 Note that there is no need to install the `JctProvider` using `java.security.Security#addProvider(Provider)` or `java.security.Security#insertProviderAt(Provider,int)`. 
 This eliminates the risk that this provider interferes with existing ones.
+
+To import the [Common CA Database file](https://ccadb.my.salesforce-sites.com/mozilla/IncludedRootsPEMTxt?TrustBitsInclude=Websites) write something like:
+
+```java
+import dev.scheibelhofer.crypto.provider.JctProvider;
+
+KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
+ks.load(new FileInputStream("IncludedRootsPEM.txt"), null);
+```
+
+Note that the password can be `null` because there is not encryption or MAC protection in PEM certificate files.
 
 ## Creating OpenSSL Keystores
 

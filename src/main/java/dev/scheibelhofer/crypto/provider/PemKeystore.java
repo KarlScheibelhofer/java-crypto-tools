@@ -369,7 +369,7 @@ public class PemKeystore extends KeyStoreSpi {
 
     private String makeUniqueAlias(Set<String> existingAliases, String suggestedAlias) {
         String alias = suggestedAlias;
-        int i = 0;
+        int i = 2;
         while (existingAliases.contains(alias)) {
             alias = suggestedAlias + "-" + i;
             i++;

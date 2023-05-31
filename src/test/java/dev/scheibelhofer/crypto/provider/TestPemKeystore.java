@@ -24,9 +24,9 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Date;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
@@ -443,9 +443,39 @@ public class TestPemKeystore {
         try (FileOutputStream fos = new FileOutputStream(keystoreFile)) {
             ks.store(fos, password.toCharArray());
         }
-
+        
         File expectedKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-enc-keystore.pem");
         assertFilesEqual(expectedKeystore, keystoreFile);
+    }
+    
+    @Test
+    public void loadMozillaRootStore4TLS() throws Exception {
+        KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
+        
+        // file from "https://ccadb.my.salesforce-sites.com/mozilla/IncludedRootsPEMTxt?TrustBitsInclude=Websites"
+        File mozillaTruststoreFile = new File("src/test/resources/", "IncludedRootsPEM.txt");
+        try (FileInputStream is = new FileInputStream(mozillaTruststoreFile)) {
+            ks.load(is, null);
+        }
+        Assertions.assertTrue(ks.size() > 0);
+
+        Enumeration<String> aliasEnum = ks.aliases();
+        while (aliasEnum.hasMoreElements()) {
+            String alias = aliasEnum.nextElement();
+            if (ks.isCertificateEntry(alias)) {
+                Certificate c = ks.getCertificate(alias);
+                Assertions.assertNotNull(c);
+                if (c instanceof X509Certificate) {
+                    X509Certificate xc = (X509Certificate) c;
+                    String subjectDN = xc.getSubjectX500Principal().getName();
+                    Assertions.assertTrue(alias.startsWith(subjectDN));
+                } else {
+                    Assertions.fail("invalid certificate entry not of type X509Certificate, alias: " + alias);
+                }
+            } else {
+                Assertions.fail("invalid keystore entry not of type trusted certificate, alias: " + alias);
+            }
+        }
     }
 
 }

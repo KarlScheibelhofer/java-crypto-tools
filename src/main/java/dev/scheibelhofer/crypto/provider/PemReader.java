@@ -65,7 +65,7 @@ class PemReader implements Closeable {
         if (base64.length() == 0) {
             return null;
         }
-        entry.initFromEncoding(Base64.getDecoder().decode(sb.toString()));
+        entry.initFromEncoding(Base64.getMimeDecoder().decode(sb.toString()));
         return entry;
     }
 
