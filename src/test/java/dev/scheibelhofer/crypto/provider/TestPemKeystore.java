@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
 import java.security.Key;
@@ -37,7 +39,6 @@ import javax.crypto.Cipher;
 import javax.crypto.EncryptedPrivateKeyInfo;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 
@@ -480,8 +481,16 @@ public class TestPemKeystore {
     }
 
     @Test
-    @Disabled
     public void loadTruststoreFolder() throws Exception {
-        Assertions.fail();
+        KeyStore ks = KeyStore.getInstance("pem-folder", JctProvider.getInstance());
+        
+        String caCertsDirPath = Paths.get("src/test/resources/", "ca-certificates").toFile().getAbsolutePath();
+        Path pemKeystoreFolderFile = Paths.get("src/test/resources/out", "ca-certificates.pem-folder");
+        Files.writeString(pemKeystoreFolderFile, caCertsDirPath, StandardCharsets.UTF_8);
+
+        try (FileInputStream is = new FileInputStream(pemKeystoreFolderFile.toFile())) {
+            ks.load(is, null);
+        }
+        Assertions.assertEquals(3, ks.size());
     }
 }

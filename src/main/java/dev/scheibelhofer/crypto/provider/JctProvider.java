@@ -37,6 +37,7 @@ public class JctProvider extends Provider {
     public JctProvider() {
         super("JctProvider", "1.0", "JCT Provider supporting PEM keystore");
         putService(new Provider.Service(this, "KeyStore", "pem", FilePemKeystore.class.getName(), null, null));
+        putService(new Provider.Service(this, "KeyStore", "pem-folder", FolderPemKeystore.class.getName(), null, null));
         putService(new Provider.Service(this, "AlgorithmParameters", "null", NullAlgorithmParameters.class.getName(), List.of("0.1"), null));
         putService(new Provider.Service(this, "Cipher", "null", NullCipher.class.getName(), null, null));
     }
