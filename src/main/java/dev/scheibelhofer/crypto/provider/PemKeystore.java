@@ -1,8 +1,5 @@
 package dev.scheibelhofer.crypto.provider;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.Key;
 import java.security.KeyStoreException;
@@ -13,7 +10,6 @@ import java.security.PublicKey;
 import java.security.Signature;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
@@ -26,12 +22,11 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -43,15 +38,15 @@ import dev.scheibelhofer.crypto.provider.Pem.PrivateKeyEntry;
 /**
  * KeyStore implementation for reading PEM format private keys and certificates.
  */
-public class PemKeystore extends KeyStoreSpi {
+public abstract class PemKeystore extends KeyStoreSpi {
 
-    private final Map<String, Pem.PrivateKeyEntry> privateKeys = new LinkedHashMap<>();
-    private final Map<String, Pem.EncryptedPrivateKeyEntry> encryptedPrivateKeys = new LinkedHashMap<>();
-    private final Map<String, List<Pem.CertificateEntry>> certificateChains = new LinkedHashMap<>();
-    private final Map<String, Pem.CertificateEntry> certificates = new LinkedHashMap<>();
-    private final Date creationDate = new Date();
+    final Map<String, Pem.PrivateKeyEntry> privateKeys = new LinkedHashMap<>();
+    final Map<String, Pem.EncryptedPrivateKeyEntry> encryptedPrivateKeys = new LinkedHashMap<>();
+    final Map<String, List<Pem.CertificateEntry>> certificateChains = new LinkedHashMap<>();
+    final Map<String, Pem.CertificateEntry> certificates = new LinkedHashMap<>();
+    final Date creationDate = new Date();
 
-    private void clearKeystore() {
+    void clearKeystore() {
         privateKeys.clear();
         encryptedPrivateKeys.clear();
         certificateChains.clear();
@@ -203,62 +198,6 @@ public class PemKeystore extends KeyStoreSpi {
         return null;
     }
 
-    @Override
-    public void engineStore(OutputStream stream, char[] password)
-            throws IOException, NoSuchAlgorithmException, CertificateException {
-        try (final PemWriter pemOut = new PemWriter(stream)) {
-            privateKeys.values().stream().forEach(pke -> pemOut.writeEntry(pke));
-            encryptedPrivateKeys.values().stream().forEach(epke -> pemOut.writeEntry(epke));
-            certificateChains.values().stream().forEach(cce -> cce.stream().forEach(c -> pemOut.writeEntry(c)));
-            certificates.values().stream().forEach(pke -> pemOut.writeEntry(pke));
-        }
-    }
-
-    @Override
-    public void engineLoad(InputStream stream, char[] password)
-            throws IOException, NoSuchAlgorithmException, CertificateException {
-        if (stream == null) {
-            clearKeystore();
-            return;
-        }
-        try (PemReader pemReader = new PemReader(stream)) {
-            List<Pem.CertificateEntry> certList = new LinkedList<>();
-
-            for (Pem.Entry entry : pemReader.readEntries()) {
-                switch (entry.type) {
-                    case certificate: {
-                        certList.add((CertificateEntry) entry);
-                        break;
-                    }
-                    case privateKey: {
-                        privateKeys.put(makeUniqueAlias(privateKeys.keySet(), entry), (PrivateKeyEntry) entry);
-                        break;
-                    }
-                    case encryptedPrivateKey: {
-                        Pem.EncryptedPrivateKeyEntry epk = (Pem.EncryptedPrivateKeyEntry) entry;
-                        encryptedPrivateKeys
-                                .put(makeUniqueAlias(encryptedPrivateKeys.keySet(), entry), epk);
-                        try {
-                            epk.decryptPrivateKey(password);
-                        } catch (PemKeystoreException e) {
-                            // ignore at this point, the app can try later with a different password calling
-                            // #engineGetKey
-                        }
-                        break;
-                    }
-                    default:
-                        break;
-                }
-            }
-            buildCertChains(certList);
-
-            certList.stream().forEach(c -> certificates
-                    .put(makeUniqueAlias(certificates.keySet(), c.certificate.getSubjectX500Principal().getName()), c));
-        } catch (PemKeystoreException | InvalidAlgorithmParameterException e) {
-            throw new IOException("error loading key", e);
-        }
-    }
-
     static boolean matching(PublicKey publicKey, PrivateKey privateKey) {
         if ((publicKey instanceof RSAPublicKey) && (privateKey instanceof RSAPrivateKey)) {
             return matching((RSAPublicKey) publicKey, (RSAPrivateKey) privateKey);
@@ -298,7 +237,7 @@ public class PemKeystore extends KeyStoreSpi {
      * @throws NoSuchAlgorithmException
      * @throws InvalidAlgorithmParameterException
      */
-    private void buildCertChains(List<Pem.CertificateEntry> certList)
+    void buildCertChains(List<Pem.CertificateEntry> certList)
             throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
         if (certList.isEmpty()) {
             return;
@@ -325,7 +264,7 @@ public class PemKeystore extends KeyStoreSpi {
         certList.removeAll(usedCertificates);
     }
 
-    private String makeAlias(CertificateEntry certificateEntry) {
+    String makeAlias(CertificateEntry certificateEntry) {
         X500Principal subject = certificateEntry.certificate.getSubjectX500Principal();
         return subject.getName();
     }
@@ -333,7 +272,7 @@ public class PemKeystore extends KeyStoreSpi {
     static final String SUBJECT_KEY_ID = "2.5.29.14";
     static final String AUTHORITY_KEY_ID = "2.5.29.35";
 
-    private List<Pem.CertificateEntry> buildChainFor(Pem.PrivateKeyEntry privateKeyEntry,
+    List<Pem.CertificateEntry> buildChainFor(Pem.PrivateKeyEntry privateKeyEntry,
             List<Pem.CertificateEntry> certList) {
         Optional<Pem.CertificateEntry> privateKeyCertificate = certList.stream()
                 .filter(c -> matching(c.certificate.getPublicKey(), privateKeyEntry.privateKey)).findFirst();
@@ -367,7 +306,7 @@ public class PemKeystore extends KeyStoreSpi {
                 certSubjectKeyId.length - 20, certSubjectKeyId.length);
     }
 
-    private String makeUniqueAlias(Set<String> existingAliases, String suggestedAlias) {
+    String makeUniqueAlias(Set<String> existingAliases, String suggestedAlias) {
         String alias = suggestedAlias;
         int i = 2;
         while (existingAliases.contains(alias)) {
@@ -377,7 +316,7 @@ public class PemKeystore extends KeyStoreSpi {
         return alias;
     }
 
-    private String makeUniqueAlias(Set<String> aliasSet, Pem.Entry entry) {
+    String makeUniqueAlias(Set<String> aliasSet, Pem.Entry entry) {
         if (entry.alias != null) {
             return makeUniqueAlias(aliasSet, entry.alias);
         }
