@@ -1,7 +1,6 @@
 package dev.scheibelhofer.crypto.provider;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -58,12 +57,12 @@ public class FolderPemKeystore extends PemKeystore {
     void readKeystoreFile(Path file, char[] password) {
         try {
             readKeystore(new FileInputStream(file.toFile()), password);
-        } catch (FileNotFoundException e) {
-            // TODO 
+        } catch (NoSuchAlgorithmException | CertificateException | IOException e) {
+            throw new PemKeystoreException("error loading file " + file, e);
         }
     }
 
-    void readKeystore(InputStream stream, char[] password) {
+    void readKeystore(InputStream stream, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
         try (PemReader pemReader = new PemReader(stream)) {
             List<Pem.CertificateEntry> certList = new LinkedList<>();
 
@@ -97,8 +96,8 @@ public class FolderPemKeystore extends PemKeystore {
 
             certList.stream().forEach(c -> certificates
                     .put(makeUniqueAlias(certificates.keySet(), c.certificate.getSubjectX500Principal().getName()), c));
-        } catch (PemKeystoreException | InvalidAlgorithmParameterException | IOException | NoSuchAlgorithmException e) {
-            // TODO
-        }        
+        } catch (PemKeystoreException | InvalidAlgorithmParameterException e) {
+            throw new IOException("error loading key", e);
+        }   
     }
 }
