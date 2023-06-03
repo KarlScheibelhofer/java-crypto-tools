@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -490,7 +491,7 @@ public class TestPemKeystore {
     public void loadTruststoreDirectory() throws Exception {
         KeyStore ks = KeyStore.getInstance("pem-directory", JctProvider.getInstance());
 
-        String caCertsDirPath = Paths.get("src/test/resources/", "ca-certificates").toFile().getAbsolutePath();
+        String caCertsDirPath = Paths.get("src/test/resources/ca-certificates").toFile().getAbsolutePath();
         Path pemKeystoreDirFile = Paths.get("src/test/resources/out", "ca-certificates.pem-folder");
         Files.writeString(pemKeystoreDirFile, caCertsDirPath, StandardCharsets.UTF_8);
 
@@ -499,6 +500,17 @@ public class TestPemKeystore {
         }
         Assertions.assertEquals(3, ks.size());
     }
+
+    @Test
+    public void loadTruststoreDirectoryShort() throws Exception {
+        KeyStore ks = KeyStore.getInstance("pem-directory", JctProvider.getInstance());
+
+        try (InputStream is = new ByteArrayInputStream("src/test/resources/ca-certificates".getBytes(StandardCharsets.UTF_8))) {
+            ks.load(is, null);
+        }
+        Assertions.assertEquals(3, ks.size());
+    }
+
 
     @Test
     public void storeTruststoreDirectory() throws Exception {
