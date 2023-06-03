@@ -12,7 +12,7 @@ Requirements:
 
 ## Features
 
-The `PemKeyStore` reads a file containing multiple PEM entries of these types:
+The `pem` keystore reads a file containing multiple PEM entries of these types:
 
 * X.509 Certificates
 * Private Keys
@@ -25,6 +25,8 @@ Features:
 The keystore file can contain multiple entries.
 The format of the entries are specified in [RFC 7468](https://www.rfc-editor.org/rfc/rfc7468).
 
+The `pem-directory` keystore ready all files in a directory tree.
+
 ## Usage
 
 Include the maven dependency in your `pom-xml`:
@@ -36,6 +38,8 @@ Include the maven dependency in your `pom-xml`:
   <version>0.0.1</version>
 </dependency>
 ```
+
+### PEM File
 
 If you have private key and certificates in OpenSSL PEM format in separate files, 
 simply write them all together in a single file. 
@@ -67,6 +71,25 @@ ks.load(new FileInputStream("IncludedRootsPEM.txt"), null);
 ```
 
 Note that the password can be `null` because there is not encryption or MAC protection in PEM certificate files.
+
+### PEM Directory Tree
+
+To read all files in a directory tree, you need to supply a stream that contains the file path of the directory. 
+This is necessary because the `load` method of a Java KeyStore only accepts an InputStream as source.
+
+Here is an example:
+
+```java
+import dev.scheibelhofer.crypto.provider.JctProvider;
+
+KeyStore ks = KeyStore.getInstance("pem-directory", JctProvider.getInstance());
+
+try (InputStream is = new ByteArrayInputStream("src/test/resources/ca-certificates".getBytes(StandardCharsets.UTF_8))) {
+    ks.load(is, null);
+}
+```
+
+This will load all files in the directory `src/test/resources/ca-certificates`.
 
 ## Creating OpenSSL Keystores
 
