@@ -28,6 +28,7 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -40,7 +41,6 @@ import javax.crypto.EncryptedPrivateKeyInfo;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
 
 public class TestPemKeystore {
 
@@ -218,10 +218,12 @@ public class TestPemKeystore {
         assertFilesEqual(originalKeystore, savedKeystore);
     }
 
-    private void assertFilesEqual(File expectedKeystore, File keystore) throws Exception {
-        String expectedContent = Files.readString(expectedKeystore.toPath(), StandardCharsets.UTF_8);
-        String content = Files.readString(keystore.toPath(), StandardCharsets.UTF_8);
-        Assertions.assertEquals(expectedContent, content);
+    private void assertFilesEqual(File expectedFile, File realFile) throws Exception {
+        assertFilesEqual(expectedFile.toPath(), realFile.toPath());
+    }
+
+    private void assertFilesEqual(Path expectedPath, Path realPath) throws Exception {
+        Assertions.assertArrayEquals(Files.readAllBytes(expectedPath), Files.readAllBytes(realPath));
     }
 
     private KeyStore loadKeyStore(File keyStoreFile, char[] password) throws Exception {
@@ -232,18 +234,20 @@ public class TestPemKeystore {
 
     @Test
     public void testLoadDes3PrivateKey() throws Exception {
-        // generated with: openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out private-key-des3.pem -pass pass:password -des3
+        // generated with: openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048
+        // -out private-key-des3.pem -pass pass:password -des3
         File originalKeystore = new File("src/test/resources", "private-key-des3.pem");
         char[] password = "password".toCharArray();
-        
+
         try {
             loadKeyStore(originalKeystore, password);
             Assertions.fail();
         } catch (IOException e) {
             // that is expected du to unsupported Des3 encrypted private keys
         }
-        
-        // converted with: openssl pkey -in private-key-des3.pem -passin pass:password -out private-key-aes128.pem -passout pass:password -aes128
+
+        // converted with: openssl pkey -in private-key-des3.pem -passin pass:password
+        // -out private-key-aes128.pem -passout pass:password -aes128
 
         File aesEncryptedKeystore = new File("src/test/resources", "private-key-aes128.pem");
         loadKeyStore(aesEncryptedKeystore, password);
@@ -265,10 +269,10 @@ public class TestPemKeystore {
         X509Certificate certificate = readCertificate(certFile);
         X509Certificate caCertificate = readCertificate(caCertFile);
         X509Certificate rootCertificate = readCertificate(rootCertFile);
-        
-        Certificate[] certChain = new Certificate[] { certificate, caCertificate, rootCertificate};
+
+        Certificate[] certChain = new Certificate[] { certificate, caCertificate, rootCertificate };
         ks.setKeyEntry(alias, privateKey, null, certChain);
-        
+
         File keystoreFile = new File("src/test/resources/out/", "www.doesnotexist.org-RSA-keystore-created.pem");
         keystoreFile.getParentFile().mkdirs();
         try (FileOutputStream fos = new FileOutputStream(keystoreFile)) {
@@ -287,7 +291,8 @@ public class TestPemKeystore {
     }
 
     private static PrivateKey readPrivateKey(File keyFile, String algorithm, String password) throws Exception {
-        String pemKey = Files.readAllLines(keyFile.toPath()).stream().filter(s -> !s.startsWith("-----")).collect(Collectors.joining(""));
+        String pemKey = Files.readAllLines(keyFile.toPath()).stream().filter(s -> !s.startsWith("-----"))
+                .collect(Collectors.joining(""));
         byte[] encoding = Base64.getDecoder().decode(pemKey);
 
         AlgorithmParameters nullAlgorithmParam = AlgorithmParameters.getInstance("0.1", JctProvider.getInstance());
@@ -307,18 +312,17 @@ public class TestPemKeystore {
         ks.load(null, null);
 
         List<File> caFileList = Arrays.asList(
-            new File("src/test/resources", "lets-encrypt-ca-R3.crt"),
-            new File("src/test/resources", "lets-encrypt-root-ISRG-Root-X1.crt"),
-            new File("src/test/resources", "Test-Intermediate-CA-RSA.crt"),
-            new File("src/test/resources", "Test-Root-CA-RSA.crt")
-        );
+                new File("src/test/resources", "lets-encrypt-ca-R3.crt"),
+                new File("src/test/resources", "lets-encrypt-root-ISRG-Root-X1.crt"),
+                new File("src/test/resources", "Test-Intermediate-CA-RSA.crt"),
+                new File("src/test/resources", "Test-Root-CA-RSA.crt"));
 
         for (File certFile : caFileList) {
             X509Certificate certificate = readCertificate(certFile);
             String alias = certFile.getName().replaceFirst("[.][^.]+$", "");
             ks.setCertificateEntry(alias, certificate);
         }
-        
+
         File keystoreFile = new File("src/test/resources/out/", "ca-truststore-created.pem");
         keystoreFile.getParentFile().mkdirs();
         String password = "password";
@@ -329,7 +333,7 @@ public class TestPemKeystore {
         File expectedKeystore = new File("src/test/resources", "ca-truststore.pem");
         assertFilesEqual(expectedKeystore, keystoreFile);
     }
-    
+
     @Test
     public void testDeleteKeyAndChain() throws Exception {
         File originalKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore.pem");
@@ -377,7 +381,7 @@ public class TestPemKeystore {
         }
         assertTrue(checked);
     }
-    
+
     @Test
     public void testReadAlias() throws Exception {
         File keystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore-alias.pem");
@@ -389,7 +393,7 @@ public class TestPemKeystore {
         assertTrue(ks.isKeyEntry(alias));
         Key pk = ks.getKey(alias, password);
         assertNotNull(pk);
-        
+
         Certificate[] cc = ks.getCertificateChain(alias);
         assertNotNull(cc);
         assertEquals(3, cc.length);
@@ -409,13 +413,14 @@ public class TestPemKeystore {
         try (FileOutputStream fos = new FileOutputStream(truststoreFile)) {
             ks.store(fos, null);
         }
-        
+
         File expectedTruststoreFile = new File("src/test/resources/", "truststore-alias.pem");
         assertFilesEqual(expectedTruststoreFile, truststoreFile);
     }
 
     private static byte[] readPemData(File pemFile) throws Exception {
-        String pemKey = Files.readAllLines(pemFile.toPath()).stream().filter(s -> !s.startsWith("-----")).collect(Collectors.joining(""));
+        String pemKey = Files.readAllLines(pemFile.toPath()).stream().filter(s -> !s.startsWith("-----"))
+                .collect(Collectors.joining(""));
         return Base64.getDecoder().decode(pemKey);
     }
 
@@ -435,26 +440,27 @@ public class TestPemKeystore {
         X509Certificate certificate = readCertificate(certFile);
         X509Certificate caCertificate = readCertificate(caCertFile);
         X509Certificate rootCertificate = readCertificate(rootCertFile);
-        
-        Certificate[] certChain = new Certificate[] { certificate, caCertificate, rootCertificate};
+
+        Certificate[] certChain = new Certificate[] { certificate, caCertificate, rootCertificate };
 
         ks.setKeyEntry(alias, encryptedPrivateKey, certChain);
-        
+
         File keystoreFile = new File("src/test/resources/out/", "www.doesnotexist.org-RSA-enc-keystore-created.pem");
         keystoreFile.getParentFile().mkdirs();
         try (FileOutputStream fos = new FileOutputStream(keystoreFile)) {
             ks.store(fos, password.toCharArray());
         }
-        
+
         File expectedKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-enc-keystore.pem");
         assertFilesEqual(expectedKeystore, keystoreFile);
     }
-    
+
     @Test
     public void loadMozillaRootStore4TLS() throws Exception {
         KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
-        
-        // file from "https://ccadb.my.salesforce-sites.com/mozilla/IncludedRootsPEMTxt?TrustBitsInclude=Websites"
+
+        // file from
+        // "https://ccadb.my.salesforce-sites.com/mozilla/IncludedRootsPEMTxt?TrustBitsInclude=Websites"
         File mozillaTruststoreFile = new File("src/test/resources/", "IncludedRootsPEM.txt");
         try (FileInputStream is = new FileInputStream(mozillaTruststoreFile)) {
             ks.load(is, null);
@@ -481,16 +487,60 @@ public class TestPemKeystore {
     }
 
     @Test
-    public void loadTruststoreFolder() throws Exception {
-        KeyStore ks = KeyStore.getInstance("pem-folder", JctProvider.getInstance());
-        
-        String caCertsDirPath = Paths.get("src/test/resources/", "ca-certificates").toFile().getAbsolutePath();
-        Path pemKeystoreFolderFile = Paths.get("src/test/resources/out", "ca-certificates.pem-folder");
-        Files.writeString(pemKeystoreFolderFile, caCertsDirPath, StandardCharsets.UTF_8);
+    public void loadTruststoreDirectory() throws Exception {
+        KeyStore ks = KeyStore.getInstance("pem-directory", JctProvider.getInstance());
 
-        try (FileInputStream is = new FileInputStream(pemKeystoreFolderFile.toFile())) {
+        String caCertsDirPath = Paths.get("src/test/resources/", "ca-certificates").toFile().getAbsolutePath();
+        Path pemKeystoreDirFile = Paths.get("src/test/resources/out", "ca-certificates.pem-folder");
+        Files.writeString(pemKeystoreDirFile, caCertsDirPath, StandardCharsets.UTF_8);
+
+        try (FileInputStream is = new FileInputStream(pemKeystoreDirFile.toFile())) {
             ks.load(is, null);
         }
         Assertions.assertEquals(3, ks.size());
+    }
+
+    @Test
+    public void storeTruststoreDirectory() throws Exception {
+        KeyStore ks = KeyStore.getInstance("pem-directory", JctProvider.getInstance());
+
+        Path caCertsDirPath = Paths.get("src/test/resources/out/", "truststore-dir");
+        deleteDirectory(caCertsDirPath);
+        
+        Path pemKeystoreDirFile = Paths.get("src/test/resources/out", "truststore.pem-directory");
+        Files.writeString(pemKeystoreDirFile, caCertsDirPath.toFile().getAbsolutePath(), StandardCharsets.UTF_8);
+
+        try (FileInputStream is = new FileInputStream(pemKeystoreDirFile.toFile())) {
+            ks.load(is, null);
+        }
+        
+        ks.setCertificateEntry("test-root-ca-rsa", getResourceCertificate("Test-Root-CA-RSA.crt"));
+        ks.setCertificateEntry("test-intermediate-ca-rsa", getResourceCertificate("Test-Intermediate-CA-RSA.crt"));
+        ks.setCertificateEntry("test-root-ca-ec", getResourceCertificate("Test-Root-CA-EC.crt"));
+        ks.setCertificateEntry("test-intermediate-ca-ec", getResourceCertificate("Test-Intermediate-CA-EC.crt"));
+        
+        // no output stream needed, if supplied, it is just closed
+        ks.store(null, null);
+        
+        assertTrue(Files.exists(caCertsDirPath));
+        assertTrue(Files.exists(caCertsDirPath.resolve("test-root-ca-rsa.crt")));
+        assertTrue(Files.exists(caCertsDirPath.resolve("test-intermediate-ca-rsa.crt")));
+        assertTrue(Files.exists(caCertsDirPath.resolve("test-root-ca-ec.crt")));
+        assertTrue(Files.exists(caCertsDirPath.resolve("test-intermediate-ca-ec.crt")));
+        
+        Path resourcesDir = Paths.get("src/test/resources/");
+        assertFilesEqual(resourcesDir.resolve("Test-Root-CA-RSA.crt"), caCertsDirPath.resolve("test-root-ca-rsa.crt"));
+        assertFilesEqual(resourcesDir.resolve("Test-Intermediate-CA-RSA.crt"), caCertsDirPath.resolve("test-intermediate-ca-rsa.crt"));
+        assertFilesEqual(resourcesDir.resolve("Test-Root-CA-EC.crt"), caCertsDirPath.resolve("test-root-ca-ec.crt"));
+        assertFilesEqual(resourcesDir.resolve("Test-Intermediate-CA-EC.crt"), caCertsDirPath.resolve("test-intermediate-ca-ec.crt"));
+    }
+
+    private void deleteDirectory(Path toBeDeleted) throws IOException {
+        if (Files.exists(toBeDeleted)) {
+            Files.walk(toBeDeleted)
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+        }
     }
 }

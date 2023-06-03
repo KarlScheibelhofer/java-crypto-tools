@@ -12,12 +12,12 @@ import java.util.List;
 import dev.scheibelhofer.crypto.provider.Pem.CertificateEntry;
 import dev.scheibelhofer.crypto.provider.Pem.PrivateKeyEntry;
 
-public class FilePemKeystore extends PemKeystore {
+public class PemFileKeystore extends PemKeystore {
 
     @Override
     public void engineStore(OutputStream stream, char[] password)
             throws IOException, NoSuchAlgorithmException, CertificateException {
-        try (final PemWriter pemOut = new PemWriter(stream)) {
+        try (final PemWriter pemOut = new PemWriter(stream, true)) {
             privateKeys.values().stream().forEach(pke -> pemOut.writeEntry(pke));
             encryptedPrivateKeys.values().stream().forEach(epke -> pemOut.writeEntry(epke));
             certificateChains.values().stream().forEach(cce -> cce.stream().forEach(c -> pemOut.writeEntry(c)));

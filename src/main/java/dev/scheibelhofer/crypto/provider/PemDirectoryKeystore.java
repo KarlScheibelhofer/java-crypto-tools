@@ -18,18 +18,25 @@ import java.util.stream.Stream;
 import dev.scheibelhofer.crypto.provider.Pem.CertificateEntry;
 import dev.scheibelhofer.crypto.provider.Pem.PrivateKeyEntry;
 
-public class FolderPemKeystore extends PemKeystore {
+public class PemDirectoryKeystore extends PemKeystore {
+
+    private Path keystorePath;
 
     @Override
     public void engineStore(OutputStream stream, char[] password)
             throws IOException, NoSuchAlgorithmException, CertificateException {
-        throw new UnsupportedOperationException("");
-                // try (final PemWriter pemOut = new PemWriter(stream)) {
-        //     privateKeys.values().stream().forEach(pke -> pemOut.writeEntry(pke));
-        //     encryptedPrivateKeys.values().stream().forEach(epke -> pemOut.writeEntry(epke));
-        //     certificateChains.values().stream().forEach(cce -> cce.stream().forEach(c -> pemOut.writeEntry(c)));
-        //     certificates.values().stream().forEach(pke -> pemOut.writeEntry(pke));
-        // }
+
+        if (!Files.exists(this.keystorePath)) {          
+            Files.createDirectories(this.keystorePath);
+        } else if (!Files.isDirectory(this.keystorePath)) {   
+            throw new IOException("the provided path name during the previous call of load() must denote a directory, if it exists, it was " + this.keystorePath);
+        }
+
+
+        privateKeys.entrySet().stream().forEach(pke -> PemWriter.write(this.keystorePath.resolve(pke.getKey() + ".pem"), pke.getValue()));
+        encryptedPrivateKeys.entrySet().stream().forEach(epke -> PemWriter.write(this.keystorePath.resolve(epke.getKey() + ".pem"), epke.getValue()));
+        certificateChains.entrySet().stream().forEach(cce -> PemWriter.write(this.keystorePath.resolve(cce.getKey() + ".crt"), cce.getValue()));
+        certificates.entrySet().stream().forEach(pke -> PemWriter.write(this.keystorePath.resolve(pke.getKey() + ".crt"), pke.getValue()));
     }
     
     @Override
@@ -40,7 +47,7 @@ public class FolderPemKeystore extends PemKeystore {
             return;
         }
         String keystoreFolderName = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
-        Path keystorePath = Paths.get(keystoreFolderName);
+        this.keystorePath = Paths.get(keystoreFolderName);
 
         Stream<Path> keystoreFiles;
         if (Files.isDirectory(keystorePath)) {
@@ -48,7 +55,8 @@ public class FolderPemKeystore extends PemKeystore {
         } else if (Files.isRegularFile(keystorePath)) {
             keystoreFiles = Stream.of(keystorePath);
         } else {
-            throw new IOException("the specified name is neither a folder nor a regular file: " + keystoreFolderName);
+            // we just remember the keystorePath for later call to engineStore()
+            keystoreFiles = Stream.empty();
         }
 
         keystoreFiles.forEach(file -> readKeystoreFile(file, password));
