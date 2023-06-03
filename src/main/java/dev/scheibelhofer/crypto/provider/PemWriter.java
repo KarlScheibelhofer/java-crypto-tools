@@ -2,12 +2,17 @@ package dev.scheibelhofer.crypto.provider;
 
 import java.io.BufferedWriter;
 import java.io.Closeable;
+import java.io.FileOutputStream;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Base64;
+import java.util.List;
+
+import dev.scheibelhofer.crypto.provider.Pem.CertificateEntry;
 
 /**
  * Writing PEM entries to a stream.
@@ -15,9 +20,11 @@ import java.util.Base64;
 class PemWriter implements Closeable, Flushable {
 
     private BufferedWriter writer;
+    private boolean writeAliasLine;
 
-    PemWriter(OutputStream os) {
+    PemWriter(OutputStream os, boolean writeAliasLine) {
         writer = new BufferedWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8));
+        this.writeAliasLine = writeAliasLine;
     }
 
     void writeEntry(Pem.Entry entry) {
@@ -31,7 +38,7 @@ class PemWriter implements Closeable, Flushable {
 
     void writePemEntry(String alias, byte[] encoding, String beginLine, String endLine) {
         try {
-            if (alias != null) {
+            if (writeAliasLine && alias != null) {
                 writer.write("Alias: ");
                 writer.write(alias);
                 writer.write("\n");
@@ -55,6 +62,22 @@ class PemWriter implements Closeable, Flushable {
     @Override
     public void flush() throws IOException {
         this.writer.flush();
+    }
+
+    public static void write(Path filePath, Pem.Entry entry){
+        try (PemWriter pw = new PemWriter(new FileOutputStream(filePath.toFile()), false)) {
+            pw.writeEntry(entry);;
+        } catch (IOException e) {
+            throw new PemKeystoreException("failed writing PEM entry to file " + filePath, e);
+        }
+    }
+
+    public static void write(Path filePath, List<CertificateEntry> certificateChainEntries) {
+        try (PemWriter pw = new PemWriter(new FileOutputStream(filePath.toFile()), false)) {
+            certificateChainEntries.stream().forEach(c -> pw.writeEntry(c));
+        } catch (IOException e) {
+            throw new PemKeystoreException("failed writing PEM entry to file " + filePath, e);
+        }
     }
 
 }
