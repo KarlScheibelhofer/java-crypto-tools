@@ -27,7 +27,7 @@ The format of the entries are specified in [RFC 7468](https://www.rfc-editor.org
 
 The `pem-directory` keystore ready all files in a directory tree.
 
-## Usage
+## Include
 
 Include the maven dependency in your `pom-xml`:
 
@@ -49,7 +49,9 @@ For example:
 cat private-key.pem webserver-certificate.crt intermediate-ca-certificate.crt root-ca-certificate.crt > webserver-key-and-certificate-chain.pem
 ```
 
-Typical usage:
+#### Reading PEM Files
+
+Here is a typical piece of Java code using this keystore:
 
 ```java
 import dev.scheibelhofer.crypto.provider.JctProvider;
@@ -72,10 +74,63 @@ ks.load(new FileInputStream("IncludedRootsPEM.txt"), null);
 
 Note that the password can be `null` because there is not encryption or MAC protection in PEM certificate files.
 
+#### Writing PEM Files
+
+Setting a private key with certificate chain and setting trusted certificate entries is supported. 
+
+To set a private key with certificate chain, look at this example:
+
+```java
+KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
+ks.load(null, null);
+
+PrivateKey privateKey = ...;
+X509Certificate certificate = ...;
+X509Certificate caCertificate = ...;
+X509Certificate rootCertificate = ...;
+
+Certificate[] certChain = new Certificate[] { certificate, caCertificate, rootCertificate};
+ks.setKeyEntry(alias, privateKey, null, certChain);
+
+File keystoreFile = ...;
+char[] password = ...;
+try (FileOutputStream fos = new FileOutputStream(keystoreFile)) {
+    ks.store(fos, password.toCharArray());    
+}
+```
+
+#### Aliases
+
+The PEM format usually does not contain names for its entries.
+Thus, this implementation usually generates artificial key aliases on loading a keystore.
+For private key entries with associated certificate chains, the end entity's certificate subject DN in its RFC 2253 format is used as alias name of the entry.
+
+This implementation, however, supports setting special `Explanatory Text` lines with label `Alias:` before each keystore entry. 
+If there is such a line, its value is used as the alias of the following entry.
+
+Such an entry will look something like this:
+
+```
+Alias: www.doesnotexist.org
+-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgC6Z/5UQUayiATltT
+gKqSGjfCslChP848q5K1kfho4J+hRANCAASSUlsdE9CoWwHcbrpqrU0DOOeKtWhW
+FUq6t+5zuLPZV8htXQnhHDa7l82/ab4rbjlaRUPaj0MMqjbd/DzKJWNF
+-----END PRIVATE KEY-----
+```
+
+For private key entries with a certificate chain, it is sufficient, if the key has an alias. 
+
+A line with `Alias: ` is also created when writing a keystore created in Java.
+
 ### PEM Directory Tree
+
+The `pem-directory` KeyStore implementation supports reading all PEM files in a directory tree.
 
 To read all files in a directory tree, you need to supply a stream that contains the file path of the directory. 
 This is necessary because the `load` method of a Java KeyStore only accepts an InputStream as source.
+
+#### Reading PEM Directory
 
 Here is an example:
 
@@ -90,6 +145,47 @@ try (InputStream is = new ByteArrayInputStream("src/test/resources/ca-certificat
 ```
 
 This will load all files in the directory `src/test/resources/ca-certificates`.
+
+#### Writing PEM Directory
+
+Writing a `pem-directory` need a different flow, because the `store` method of KeyStore takes an `OutputStream`.
+This does not easily allow to write multiple files to a directory.
+Thus, the application must load the `pem-directory` just as in reading an existing one.
+The provided directory name, however, does not need to exist.
+The implementation gets the directory name via the `InputStream` 
+and is uses this directory to store the PEM files to during the subsequent call to the KeyStore's `store` method.
+
+Have a look at this example:
+
+```java
+import dev.scheibelhofer.crypto.provider.JctProvider;
+
+KeyStore ks = KeyStore.getInstance("pem-directory", JctProvider.getInstance());
+
+// just a pseudo keystore file containing the name of our PEM directory
+Path pemKeystoreDirFile = Paths.get("src/test/resources/out/truststore.pem-directory");
+Files.writeString(pemKeystoreDirFile, Paths.get("src/test/resources/out/truststore-dir").toFile().getAbsolutePath(), StandardCharsets.UTF_8);
+
+// load this diretory name into the keystore via a call to load
+try (FileInputStream is = new FileInputStream(pemKeystoreDirFile.toFile())) {
+    ks.load(is, null);
+}
+
+// store your entries in the keystore
+X509Certificate caCertificate1 = ...;
+X509Certificate caCertificate2 = ...;
+
+ks.setCertificateEntry("ca-certificate-1", caCertificate1);
+ks.setCertificateEntry("ca-certificate-2", caCertificate2);
+
+// now store the entries to the directory provided before via the call to load()
+// no output stream needed, if supplied, it is just closed
+ks.store(null, null);
+```
+
+#### Aliases
+
+The `pem-directory` KeyStore uses the filenames as alias of the entries.
 
 ## Creating OpenSSL Keystores
 
@@ -151,30 +247,6 @@ KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
 ks.load(new FileInputStream("webserver-keystore.pem"), password);
 ```
 
-## Aliases
-
-The PEM format usually does not contain names for its entries.
-In this case, this implementation generates artificial key aliases on loading a keystore.
-For private key entries with associated certificate chains, the end entity's certificate subject DN in its RFC 2253 format is used as alias name of the entry.
-
-This implementation, however, supports setting special `Explanatory Text` lines with label `Alias:` before each keystore entry. 
-If there is such a line, its value is used as the alias of the following entry.
-
-Such an entry will look something like this:
-
-```
-Alias: www.doesnotexist.org
------BEGIN PRIVATE KEY-----
-MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgC6Z/5UQUayiATltT
-gKqSGjfCslChP848q5K1kfho4J+hRANCAASSUlsdE9CoWwHcbrpqrU0DOOeKtWhW
-FUq6t+5zuLPZV8htXQnhHDa7l82/ab4rbjlaRUPaj0MMqjbd/DzKJWNF
------END PRIVATE KEY-----
-```
-
-For private key entries with a certificate chain, it is sufficient, if the key has an alias. 
-
-A line with `Alias: ` is also created when writing a keystore created in Java.
-
 ## Restrictions
 
 ### Only AES Encrypted Private Keys
@@ -221,28 +293,3 @@ openssl pkey -in private-key-des3.pem -passin pass:password -out private-key-aes
 ```
 
 The `pem` keystore can load the converted `private-key-aes128.pem` encrypted with `aes128` and password `password`.
-
-### Setting Keys and Storing
-
-Setting a private key with certificate chain and setting trusted certificate entries is supported. 
-
-For example:
-
-```java
-KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
-ks.load(null, null);
-
-PrivateKey privateKey = ...;
-X509Certificate certificate = ...;
-X509Certificate caCertificate = ...;
-X509Certificate rootCertificate = ...;
-
-Certificate[] certChain = new Certificate[] { certificate, caCertificate, rootCertificate};
-ks.setKeyEntry(alias, privateKey, null, certChain);
-
-File keystoreFile = ...;
-char[] password = ...;
-try (FileOutputStream fos = new FileOutputStream(keystoreFile)) {
-    ks.store(fos, password.toCharArray());    
-}
-```
