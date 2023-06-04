@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,6 +36,7 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import javax.crypto.Cipher;
@@ -511,15 +513,14 @@ public class TestPemKeystore {
         Assertions.assertEquals(3, ks.size());
     }
 
-
     @Test
     public void storeTruststoreDirectory() throws Exception {
         KeyStore ks = KeyStore.getInstance("pem-directory", JctProvider.getInstance());
 
-        Path caCertsDirPath = Paths.get("src/test/resources/out/", "truststore-dir");
+        Path caCertsDirPath = Paths.get("src/test/resources/out/truststore-dir");
         deleteDirectory(caCertsDirPath);
         
-        Path pemKeystoreDirFile = Paths.get("src/test/resources/out", "truststore.pem-directory");
+        Path pemKeystoreDirFile = Paths.get("src/test/resources/out/truststore.pem-directory");
         Files.writeString(pemKeystoreDirFile, caCertsDirPath.toFile().getAbsolutePath(), StandardCharsets.UTF_8);
 
         try (FileInputStream is = new FileInputStream(pemKeystoreDirFile.toFile())) {
@@ -531,8 +532,25 @@ public class TestPemKeystore {
         ks.setCertificateEntry("test-root-ca-ec", getResourceCertificate("Test-Root-CA-EC.crt"));
         ks.setCertificateEntry("test-intermediate-ca-ec", getResourceCertificate("Test-Intermediate-CA-EC.crt"));
         
+        final AtomicBoolean osClosed = new AtomicBoolean(false);
+        OutputStream dummyOs = new OutputStream() {
+            
+            @Override
+            public void write(int b) throws IOException {
+                // empty
+            }
+            
+            @Override
+            public void close() {
+                osClosed.set(true);
+            }
+            
+        };
+
         // no output stream needed, if supplied, it is just closed
-        ks.store(null, null);
+        ks.store(dummyOs, null);
+
+        assertTrue(osClosed.get());
         
         assertTrue(Files.exists(caCertsDirPath));
         assertTrue(Files.exists(caCertsDirPath.resolve("test-root-ca-rsa.crt")));

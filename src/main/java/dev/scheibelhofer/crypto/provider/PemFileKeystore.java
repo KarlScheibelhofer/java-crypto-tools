@@ -65,7 +65,7 @@ public class PemFileKeystore extends PemKeystore {
 
             certList.stream().forEach(c -> certificates
                     .put(makeUniqueAlias(certificates.keySet(), c.certificate.getSubjectX500Principal().getName()), c));
-        } catch (PemKeystoreException | InvalidAlgorithmParameterException e) {
+        } catch (InvalidAlgorithmParameterException|PemKeystoreException e) {
             throw new IOException("error loading key", e);
         }
     }    

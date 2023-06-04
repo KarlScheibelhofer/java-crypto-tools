@@ -13,6 +13,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import dev.scheibelhofer.crypto.provider.Pem.CertificateEntry;
@@ -20,23 +21,25 @@ import dev.scheibelhofer.crypto.provider.Pem.PrivateKeyEntry;
 
 public class PemDirectoryKeystore extends PemKeystore {
 
+    final Set<String> FILE_EXTENSIONS = Set.of(".crt", ".pem");
+
     private Path keystorePath;
 
     @Override
     public void engineStore(OutputStream stream, char[] password)
             throws IOException, NoSuchAlgorithmException, CertificateException {
-
         if (!Files.exists(this.keystorePath)) {          
             Files.createDirectories(this.keystorePath);
         } else if (!Files.isDirectory(this.keystorePath)) {   
             throw new IOException("the provided path name during the previous call of load() must denote a directory, if it exists, it was " + this.keystorePath);
         }
 
-
         privateKeys.entrySet().stream().forEach(pke -> PemWriter.write(this.keystorePath.resolve(pke.getKey() + ".pem"), pke.getValue()));
         encryptedPrivateKeys.entrySet().stream().forEach(epke -> PemWriter.write(this.keystorePath.resolve(epke.getKey() + ".pem"), epke.getValue()));
         certificateChains.entrySet().stream().forEach(cce -> PemWriter.write(this.keystorePath.resolve(cce.getKey() + ".crt"), cce.getValue()));
         certificates.entrySet().stream().forEach(pke -> PemWriter.write(this.keystorePath.resolve(pke.getKey() + ".crt"), pke.getValue()));
+
+        stream.close();
     }
     
     @Override
@@ -59,7 +62,18 @@ public class PemDirectoryKeystore extends PemKeystore {
             keystoreFiles = Stream.empty();
         }
 
-        keystoreFiles.forEach(file -> readKeystoreFile(file, password));
+        keystoreFiles
+            .filter(path -> FILE_EXTENSIONS.contains(getFileExtension(path)))
+            .forEach(path -> readKeystoreFile(path, password));
+    }
+
+    static String getFileExtension(Path p) {
+        String name = p.getFileName().toString();
+        int extensionIndex = name.lastIndexOf(".");
+        if (extensionIndex == -1) {
+            return ""; 
+        }
+        return name.substring(extensionIndex);
     }
 
     void readKeystoreFile(Path file, char[] password) {
