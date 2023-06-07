@@ -35,7 +35,7 @@ Include the maven dependency in your `pom-xml`:
 <dependency>
   <groupId>dev.scheibelhofer</groupId>
   <artifactId>crypto-tools</artifactId>
-  <version>0.0.3</version>
+  <version>0.0.5</version>
 </dependency>
 ```
 
