@@ -8,12 +8,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import dev.scheibelhofer.crypto.provider.Pem.CertificateEntry;
@@ -62,64 +62,68 @@ public class PemDirectoryKeystore extends PemKeystore {
             keystoreFiles = Stream.empty();
         }
 
-        keystoreFiles
-            .filter(path -> FILE_EXTENSIONS.contains(getFileExtension(path)))
-            .forEach(path -> readKeystoreFile(path, password));
+        List<Path> pathList = keystoreFiles
+            .filter(path -> FILE_EXTENSIONS.contains(getFileExtension(path))).
+            collect(Collectors.toList());
+
+        readKeystore(pathList, password);
     }
 
     static String getFileExtension(Path p) {
         String name = p.getFileName().toString();
-        int extensionIndex = name.lastIndexOf(".");
-        if (extensionIndex == -1) {
+        int lastDotIndex = name.lastIndexOf(".");
+        if (lastDotIndex == -1) {
             return ""; 
         }
-        return name.substring(extensionIndex);
+        return name.substring(lastDotIndex);
     }
 
-    void readKeystoreFile(Path file, char[] password) {
-        try {
-            readKeystore(new FileInputStream(file.toFile()), password);
-        } catch (NoSuchAlgorithmException | CertificateException | IOException e) {
-            throw new PemKeystoreException("error loading file " + file, e);
+    static String getFileBasename(Path p) {
+        String name = p.getFileName().toString();
+        int lastDotIndex = name.lastIndexOf(".");
+        if (lastDotIndex == -1) {
+            return name; 
         }
+        return name.substring(0, lastDotIndex);
     }
 
-    void readKeystore(InputStream stream, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
-        try (PemReader pemReader = new PemReader(stream)) {
-            List<Pem.CertificateEntry> certList = new LinkedList<>();
-
-            for (Pem.Entry entry : pemReader.readEntries()) {
-                switch (entry.type) {
-                    case certificate: {
-                        certList.add((CertificateEntry) entry);
-                        break;
-                    }
-                    case privateKey: {
-                        privateKeys.put(makeUniqueAlias(privateKeys.keySet(), entry), (PrivateKeyEntry) entry);
-                        break;
-                    }
-                    case encryptedPrivateKey: {
-                        Pem.EncryptedPrivateKeyEntry epk = (Pem.EncryptedPrivateKeyEntry) entry;
-                        encryptedPrivateKeys
-                                .put(makeUniqueAlias(encryptedPrivateKeys.keySet(), entry), epk);
-                        try {
-                            epk.decryptPrivateKey(password);
-                        } catch (PemKeystoreException e) {
-                            // ignore at this point, the app can try later with a different password calling
-                            // #engineGetKey
+    void readKeystore(List<Path> pathList, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
+        List<Pem.CertificateEntry> certList = new LinkedList<>();
+        for (Path filePath : pathList) {
+            String aliasCandidate = getFileBasename(filePath);
+            try (PemReader pemReader = new PemReader(new FileInputStream(filePath.toFile()), aliasCandidate)) {
+                for (Pem.Entry entry : pemReader.readEntries()) {
+                    switch (entry.type) {
+                        case certificate: {
+                            certList.add((CertificateEntry) entry);
+                            break;
                         }
+                        case privateKey: {
+                            privateKeys.put(makeUniqueAlias(privateKeys.keySet(), entry), (PrivateKeyEntry) entry);
+                            break;
+                        }
+                        case encryptedPrivateKey: {
+                            Pem.EncryptedPrivateKeyEntry epk = (Pem.EncryptedPrivateKeyEntry) entry;
+                            encryptedPrivateKeys
+                            .put(makeUniqueAlias(encryptedPrivateKeys.keySet(), entry), epk);
+                            try {
+                                epk.decryptPrivateKey(password);
+                            } catch (PemKeystoreException e) {
+                                // ignore at this point, the app can try later with a different password calling
+                                // #engineGetKey
+                            }
+                            break;
+                        }
+                        default:
                         break;
                     }
-                    default:
-                        break;
                 }
-            }
-            buildCertChains(certList);
-
-            certList.stream().forEach(c -> certificates
-                    .put(makeUniqueAlias(certificates.keySet(), c.certificate.getSubjectX500Principal().getName()), c));
-        } catch (PemKeystoreException | InvalidAlgorithmParameterException e) {
-            throw new IOException("error loading key", e);
-        }   
+            } catch (PemKeystoreException e) {
+                throw new IOException("error loading key", e);
+            }   
+        }
+        buildCertChains(certList);
+        
+        certList.stream().forEach(c -> certificates.put(makeUniqueAlias(certificates.keySet(), c.certificate.getSubjectX500Principal().getName()), c));
     }
 }

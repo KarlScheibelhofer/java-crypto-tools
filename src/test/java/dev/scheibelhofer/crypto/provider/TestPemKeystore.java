@@ -3,6 +3,7 @@ package dev.scheibelhofer.crypto.provider;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -573,4 +574,31 @@ public class TestPemKeystore {
                     .forEach(File::delete);
         }
     }
+
+
+    @Test
+    public void loadTruststoreDirectoryFromFile() throws Exception {
+        KeyStore ks = KeyStore.getInstance("pem-directory", JctProvider.getInstance());
+
+        try (InputStream is = new ByteArrayInputStream("src/test/resources/dummy-file".getBytes(StandardCharsets.UTF_8))) {
+            ks.load(is, null);
+        }
+        assertThrowsExactly(IOException.class, () -> ks.store(null, null));
+    }
+ 
+    @Test
+    public void loadTruststoreDirectoryWithPrivateKey() throws Exception {
+        KeyStore ks = KeyStore.getInstance("pem-directory", JctProvider.getInstance());
+
+        try (InputStream is = new ByteArrayInputStream("src/test/resources/dir-keystore".getBytes(StandardCharsets.UTF_8))) {
+            ks.load(is, null);
+        }
+        Assertions.assertEquals(1, ks.size());
+
+        assertTrue(ks.isKeyEntry("www.doesnotexist.org-EC"));
+        assertNotNull(ks.getKey("www.doesnotexist.org-EC", null));
+        Certificate[] certChain = ks.getCertificateChain("www.doesnotexist.org-EC");
+        assertNotNull(certChain);
+        assertEquals(1, certChain.length);
+    }    
 }

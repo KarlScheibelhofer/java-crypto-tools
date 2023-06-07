@@ -1,6 +1,5 @@
 package dev.scheibelhofer.crypto.provider;
 
-import java.security.InvalidAlgorithmParameterException;
 import java.security.Key;
 import java.security.KeyStoreException;
 import java.security.KeyStoreSpi;
@@ -234,11 +233,8 @@ public abstract class PemKeystore extends KeyStoreSpi {
      * certificates from the list.
      * 
      * @param certList list of all certificates found in the keystore.
-     * @throws NoSuchAlgorithmException
-     * @throws InvalidAlgorithmParameterException
      */
-    void buildCertChains(List<Pem.CertificateEntry> certList)
-            throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
+    void buildCertChains(List<Pem.CertificateEntry> certList) {
         if (certList.isEmpty()) {
             return;
         }

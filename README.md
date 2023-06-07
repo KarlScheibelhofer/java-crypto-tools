@@ -148,14 +148,14 @@ This will load all files in the directory `src/test/resources/ca-certificates`.
 
 #### Writing PEM Directory
 
-Writing a `pem-directory` need a different flow, because the `store` method of KeyStore takes an `OutputStream`.
+Writing a `pem-directory` needs a different flow, because the `store` method of KeyStore takes an `OutputStream`.
 This does not easily allow to write multiple files to a directory.
 Thus, the application must load the `pem-directory` just as in reading an existing one.
 The provided directory name, however, does not need to exist.
 The implementation gets the directory name via the `InputStream` 
 and is uses this directory to store the PEM files to during the subsequent call to the KeyStore's `store` method.
 
-Have a look at this example:
+Have a look at this example which creates new PEM directory keystore in `src/test/resources/out/truststore-dir`:
 
 ```java
 import dev.scheibelhofer.crypto.provider.JctProvider;
@@ -182,6 +182,8 @@ ks.setCertificateEntry("ca-certificate-2", caCertificate2);
 // no output stream needed, if supplied, it is just closed
 ks.store(null, null);
 ```
+
+Each entry is stored in a separate PEM file, in this example in `src/test/resources/out/truststore-dir`.
 
 #### Aliases
 

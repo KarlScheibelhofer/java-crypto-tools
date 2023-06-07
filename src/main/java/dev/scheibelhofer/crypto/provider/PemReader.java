@@ -17,9 +17,11 @@ import java.util.Locale;
 class PemReader implements Closeable {
 
     private BufferedReader reader;
+    private String aliasCandidate;
 
-    PemReader(InputStream is) {
+    PemReader(InputStream is, String aliasCandidate) {
         reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+        this.aliasCandidate = aliasCandidate;
     }
 
     List<Pem.Entry> readEntries() throws IOException {
@@ -37,7 +39,7 @@ class PemReader implements Closeable {
         StringBuilder sb = new StringBuilder(1024);
         String line;
         Pem.Entry entry = new Pem.Entry(Pem.Entry.Type.unknown);
-        String alias = null;
+        String alias = this.aliasCandidate;
 
         while ((line = reader.readLine()) != null && !line.startsWith(Pem.BEGIN)) {
             String trimmedLine = line.trim();

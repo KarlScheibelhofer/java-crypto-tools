@@ -3,7 +3,6 @@ package dev.scheibelhofer.crypto.provider;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.LinkedList;
@@ -32,7 +31,7 @@ public class PemFileKeystore extends PemKeystore {
             clearKeystore();
             return;
         }
-        try (PemReader pemReader = new PemReader(stream)) {
+        try (PemReader pemReader = new PemReader(stream, null)) {
             List<Pem.CertificateEntry> certList = new LinkedList<>();
 
             for (Pem.Entry entry : pemReader.readEntries()) {
@@ -65,7 +64,7 @@ public class PemFileKeystore extends PemKeystore {
 
             certList.stream().forEach(c -> certificates
                     .put(makeUniqueAlias(certificates.keySet(), c.certificate.getSubjectX500Principal().getName()), c));
-        } catch (InvalidAlgorithmParameterException|PemKeystoreException e) {
+        } catch (PemKeystoreException e) {
             throw new IOException("error loading key", e);
         }
     }    
