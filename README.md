@@ -2,10 +2,18 @@
 
 [![Maven Central](https://img.shields.io/maven-central/v/dev.scheibelhofer/crypto-tools)](https://central.sonatype.com/artifact/dev.scheibelhofer/crypto-tools/)
 
-This library includes a JCA provider implementing a `PemKeyStore` for the JCA `KeyStore` API. 
-It allows reading (plain) private keys, certificates and encrypted private keys.
+This library enables reading and writing keys and certificate in Java via the JCA KeyStore API.
+It includes a JCA provider implementing a `pem` type `KeyStore`. 
+It allows reading and writing unencrypted or encrypted  private keys and certificates.
 
-It enables  easy integration of PEM keystores like the PEM version of the Common CA Database from Mozilla.
+It enables easy integration of PEM keystores like the PEM version of the Common CA Database from Mozilla.
+
+Many software products use PEM (see [RFC 7468](https://www.rfc-editor.org/rfc/rfc7468)) as format for cryptographic keys and certificates.
+PEM format, as known in OpenSSL and many system based on it, is one of the most versatile formats for this type of data.
+If you get keys or certificates, it is most likely that you get it in PEM.
+To use it in Java, you typically had to import it in a Java keystore of type JKS or PKCS12.
+With this library, this conversion is no longer required.
+You can read and write PEM files directly without the need for conversion.
 
 Requirements:
 * Java 11 or higher

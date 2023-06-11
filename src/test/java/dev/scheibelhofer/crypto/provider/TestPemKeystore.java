@@ -1,5 +1,8 @@
 package dev.scheibelhofer.crypto.provider;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -23,6 +26,7 @@ import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.PrivateKey;
+import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -267,7 +271,7 @@ public class TestPemKeystore {
         File rootCertFile = new File("src/test/resources", "Test-Root-CA-RSA.crt");
         File keyFile = new File("src/test/resources", "www.doesnotexist.org-RSA.pem");
         String password = "password";
-        String alias = "www.doesnotexist.org";
+        String alias = "www.doesnotexist.org-RSA";
 
         PrivateKey privateKey = readPrivateKey(keyFile, "RSA", password);
         X509Certificate certificate = readCertificate(certFile);
@@ -390,7 +394,7 @@ public class TestPemKeystore {
     public void testReadAlias() throws Exception {
         File keystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore-alias.pem");
         char[] password = "password".toCharArray();
-        String alias = "www.doesnotexist.org";
+        String alias = "www.doesnotexist.org-RSA";
 
         KeyStore ks = loadKeyStore(keystore, password);
 
@@ -438,7 +442,7 @@ public class TestPemKeystore {
         File rootCertFile = new File("src/test/resources", "Test-Root-CA-RSA.crt");
         File keyFile = new File("src/test/resources", "www.doesnotexist.org-RSA-enc.pem");
         String password = "password";
-        String alias = "www.doesnotexist.org";
+        String alias = "www.doesnotexist.org-RSA";
 
         byte[] encryptedPrivateKey = readPemData(keyFile);
         X509Certificate certificate = readCertificate(certFile);
@@ -601,4 +605,30 @@ public class TestPemKeystore {
         assertNotNull(certChain);
         assertEquals(1, certChain.length);
     }    
+
+    @Test
+    public void testInstance() throws Exception {
+        assertNotNull(KeyStore.getInstance("pem", JctProvider.getInstance()));
+        assertNotNull(KeyStore.getInstance("PEM", JctProvider.getInstance()));
+        assertNotNull(KeyStore.getInstance("Pem", JctProvider.getInstance()));
+        
+        assertNotNull(KeyStore.getInstance("pem-directory", JctProvider.getInstance()));
+        assertNotNull(KeyStore.getInstance("PEM-DIRECTORY", JctProvider.getInstance()));
+        assertNotNull(KeyStore.getInstance("Pem-Directory", JctProvider.getInstance()));
+    }
+
+    @Test
+    public void testInstallProvider() throws Exception {
+        assertThat(Security.addProvider(JctProvider.getInstance()), is(greaterThanOrEqualTo(0)));
+
+        assertNotNull(KeyStore.getInstance("pem").getProvider().equals(JctProvider.getInstance()));
+        assertNotNull(KeyStore.getInstance("PEM").getProvider().equals(JctProvider.getInstance()));
+        assertNotNull(KeyStore.getInstance("Pem").getProvider().equals(JctProvider.getInstance()));
+        
+        assertNotNull(KeyStore.getInstance("pem-directory").getProvider().equals(JctProvider.getInstance()));
+        assertNotNull(KeyStore.getInstance("PEM-DIRECTORY").getProvider().equals(JctProvider.getInstance()));
+        assertNotNull(KeyStore.getInstance("Pem-Directory").getProvider().equals(JctProvider.getInstance()));        
+
+        Security.removeProvider(JctProvider.getInstance().getName());
+    }
 }
