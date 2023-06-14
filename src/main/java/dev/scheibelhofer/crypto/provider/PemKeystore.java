@@ -241,7 +241,7 @@ public abstract class PemKeystore extends KeyStoreSpi {
         Set<Pem.CertificateEntry> usedCertificates = new HashSet<>();
         for (String alias : privateKeys.keySet()) {
             Pem.PrivateKeyEntry privateKeyEntry = privateKeys.get(alias);
-            List<Pem.CertificateEntry> certChain = buildChainFor(privateKeyEntry, certList);
+            List<Pem.CertificateEntry> certChain = buildChainFor(privateKeyEntry.privateKey, certList);
             if (certChain.size() > 0) {
                 String newAlias;
                 if (privateKeyEntry.alias != null) {
@@ -250,6 +250,22 @@ public abstract class PemKeystore extends KeyStoreSpi {
                     newAlias = makeAlias(certChain.get(0));
                     privateKeys.remove(alias);
                     privateKeys.put(newAlias, privateKeyEntry);
+                }
+                certificateChains.put(newAlias, certChain);
+                usedCertificates.addAll(certChain);
+            }
+        }
+        for (String alias : encryptedPrivateKeys.keySet()) {
+            Pem.EncryptedPrivateKeyEntry privateKeyEntry = encryptedPrivateKeys.get(alias);
+            List<Pem.CertificateEntry> certChain = buildChainFor(privateKeyEntry.privateKey, certList);
+            if (certChain.size() > 0) {
+                String newAlias;
+                if (privateKeyEntry.alias != null) {
+                    newAlias = alias;
+                } else {
+                    newAlias = makeAlias(certChain.get(0));
+                    encryptedPrivateKeys.remove(alias);
+                    encryptedPrivateKeys.put(newAlias, privateKeyEntry);
                 }
                 certificateChains.put(newAlias, certChain);
                 usedCertificates.addAll(certChain);
@@ -268,10 +284,9 @@ public abstract class PemKeystore extends KeyStoreSpi {
     static final String SUBJECT_KEY_ID = "2.5.29.14";
     static final String AUTHORITY_KEY_ID = "2.5.29.35";
 
-    List<Pem.CertificateEntry> buildChainFor(Pem.PrivateKeyEntry privateKeyEntry,
-            List<Pem.CertificateEntry> certList) {
+    List<Pem.CertificateEntry> buildChainFor(PrivateKey privateKey, List<Pem.CertificateEntry> certList) {
         Optional<Pem.CertificateEntry> privateKeyCertificate = certList.stream()
-                .filter(c -> matching(c.certificate.getPublicKey(), privateKeyEntry.privateKey)).findFirst();
+                .filter(c -> matching(c.certificate.getPublicKey(), privateKey)).findFirst();
         List<Pem.CertificateEntry> certChain = new ArrayList<>(4);
         Pem.CertificateEntry cert = privateKeyCertificate.orElse(null);
         while (cert != null) {

@@ -521,6 +521,7 @@ public class TestPemKeystore {
     @Test
     public void storeTruststoreDirectory() throws Exception {
         KeyStore ks = KeyStore.getInstance("pem-directory", JctProvider.getInstance());
+        ks.load(null, null);
 
         Path caCertsDirPath = Paths.get("src/test/resources/out/truststore-dir");
         deleteDirectory(caCertsDirPath);
@@ -591,17 +592,36 @@ public class TestPemKeystore {
     }
  
     @Test
-    public void loadTruststoreDirectoryWithPrivateKey() throws Exception {
+    public void loadKeystoreDirectoryWithPrivateKey() throws Exception {
         KeyStore ks = KeyStore.getInstance("pem-directory", JctProvider.getInstance());
 
         try (InputStream is = new ByteArrayInputStream("src/test/resources/dir-keystore".getBytes(StandardCharsets.UTF_8))) {
             ks.load(is, null);
         }
         Assertions.assertEquals(1, ks.size());
+        String alias = "www.doesnotexist.org-EC";
+        
+        assertTrue(ks.isKeyEntry(alias));
+        assertNotNull(ks.getKey(alias, null));
+        Certificate[] certChain = ks.getCertificateChain(alias);
+        assertNotNull(certChain);
+        assertEquals(1, certChain.length);
+    }    
+    
+    @Test
+    public void loadKeystoreDirectoryWithEncPrivateKey() throws Exception {
+        KeyStore ks = KeyStore.getInstance("pem-directory", JctProvider.getInstance());
+        
+        String password = "password";
+        try (InputStream is = new ByteArrayInputStream("src/test/resources/dir-keystore-enc".getBytes(StandardCharsets.UTF_8))) {
+            ks.load(is, password.toCharArray());
+        }
+        Assertions.assertEquals(1, ks.size());
+        String alias = "www.doesnotexist.org-EC-enc";
 
-        assertTrue(ks.isKeyEntry("www.doesnotexist.org-EC"));
-        assertNotNull(ks.getKey("www.doesnotexist.org-EC", null));
-        Certificate[] certChain = ks.getCertificateChain("www.doesnotexist.org-EC");
+        assertTrue(ks.isKeyEntry(alias));
+        assertNotNull(ks.getKey(alias, password.toCharArray()));
+        Certificate[] certChain = ks.getCertificateChain(alias);
         assertNotNull(certChain);
         assertEquals(1, certChain.length);
     }    

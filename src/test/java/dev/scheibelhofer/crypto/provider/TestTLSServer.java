@@ -12,6 +12,8 @@ import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import javax.net.ssl.SSLServerSocketFactory;
@@ -21,6 +23,8 @@ import javax.net.ssl.SSLSocket;
 import org.junit.jupiter.api.Test;
 
 public class TestTLSServer {
+
+    static final Logger LOG = Logger.getLogger(TestTLSServer.class.getName());
 
     @Test
     public void testTLSServerSocket() throws Exception {
@@ -40,7 +44,7 @@ public class TestTLSServer {
         try (BufferedReader responseReader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
             String line;
             while ((line = responseReader.readLine()) != null) {
-                System.out.println("CLIENT " + line);
+                LOG.log(Level.INFO, "CLIENT " + line);
             }
         }
         
@@ -53,9 +57,9 @@ public class TestTLSServer {
         final Runnable serverRunnable = () -> {
             SSLServerSocketFactory ssf = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
             try (ServerSocket ss = ssf.createServerSocket(8443)) {
-                System.out.print("SERVER listen... ");
+                LOG.log(Level.INFO, "SERVER listen... ");
                 Socket socket = ss.accept();
-                System.out.println("accepted incoming connection");
+                LOG.log(Level.INFO, "SERVER accepted incoming connection");
                 
                 SSLSession session = ((SSLSocket) socket).getSession();
                 List<X509Certificate> serverCertChain = Arrays.asList(session.getLocalCertificates()).stream()

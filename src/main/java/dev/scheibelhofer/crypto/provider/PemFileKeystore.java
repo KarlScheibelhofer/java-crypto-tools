@@ -46,8 +46,7 @@ public class PemFileKeystore extends PemKeystore {
                     }
                     case encryptedPrivateKey: {
                         Pem.EncryptedPrivateKeyEntry epk = (Pem.EncryptedPrivateKeyEntry) entry;
-                        encryptedPrivateKeys
-                                .put(makeUniqueAlias(encryptedPrivateKeys.keySet(), entry), epk);
+                        encryptedPrivateKeys.put(makeUniqueAlias(encryptedPrivateKeys.keySet(), entry), epk);
                         try {
                             epk.decryptPrivateKey(password);
                         } catch (PemKeystoreException e) {
