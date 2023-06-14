@@ -43,7 +43,7 @@ public class NullAlgorithmParameters extends AlgorithmParametersSpi {
 
     @Override
     protected String engineToString() {
-        throw new UnsupportedOperationException("Unimplemented method 'engineToString'");
+        return "null";
     }
     
 }

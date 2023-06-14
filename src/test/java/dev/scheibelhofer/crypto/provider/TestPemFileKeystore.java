@@ -3,6 +3,7 @@ package dev.scheibelhofer.crypto.provider;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -329,6 +330,31 @@ public class TestPemFileKeystore {
             }
         }
         assertTrue(checked);
+    }
+
+    @Test
+    public void testGetCertificateChainAlias() throws Exception {
+        File originalKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore.pem");
+        char[] password = "password".toCharArray();
+        String alias = "CN=www.doesnotexist.org-RSA";
+
+        KeyStore ks = loadKeyStore(originalKeystore, password);
+
+        X509Certificate eeCert = TestPemKeystore.getResourceCertificate("www.doesnotexist.org-RSA.crt");
+        String eeCertAlias = ks.getCertificateAlias(eeCert);
+
+        assertEquals(alias, eeCertAlias);
+    }
+
+    @Test
+    public void testGetCertificateAliasUnknown() throws Exception {
+        File originalKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore.pem");
+        char[] password = "password".toCharArray();
+
+        KeyStore ks = loadKeyStore(originalKeystore, password);
+
+        X509Certificate eeCert = TestPemKeystore.getResourceCertificate("www.doesnotexist.org-EC.crt");
+        assertNull(ks.getCertificateAlias(eeCert));
     }
 
     @Test

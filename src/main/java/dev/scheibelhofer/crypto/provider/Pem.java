@@ -43,11 +43,6 @@ class Pem {
             this.alias = alias;
         }
 
-        Entry(Type type, byte[] encoding) {
-            this.type = type;
-            this.encoding = encoding;
-        }
-        
         void initFromEncoding(byte[] encoding) {
             this.encoding = encoding;
         }

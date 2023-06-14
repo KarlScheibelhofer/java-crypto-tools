@@ -3,7 +3,11 @@ package dev.scheibelhofer.crypto.provider;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,15 +19,18 @@ import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.PrivateKey;
+import java.security.SecureRandom;
 import java.security.Security;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
 import java.util.stream.Collectors;
 
 import javax.crypto.Cipher;
 import javax.crypto.EncryptedPrivateKeyInfo;
+import javax.crypto.spec.IvParameterSpec;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -96,4 +103,51 @@ public class TestPemKeystore {
         Security.removeProvider(JctProvider.getInstance().getName());
     }
 
+    @Test
+    public void testNullPrivateKey() throws Exception {
+        PrivateKey k = new NullPrivateKey();
+        assertEquals("null", k.getAlgorithm());
+        assertEquals("null", k.getFormat());
+        assertNull(k.getEncoded());
+    }
+
+    @Test
+    public void testNullAlgorithmParameters() throws Exception {
+        AlgorithmParameters.getInstance("null", JctProvider.getInstance()).init(null, null);
+        AlgorithmParameters.getInstance("null", JctProvider.getInstance()).init((byte[]) null);
+        AlgorithmParameters.getInstance("null", JctProvider.getInstance()).init((AlgorithmParameterSpec) null);
+        AlgorithmParameters ap = AlgorithmParameters.getInstance("null", JctProvider.getInstance());
+        ap.init((byte[]) null);
+        assertThrows(UnsupportedOperationException.class,() -> ap.getParameterSpec(null));
+        assertThrows(UnsupportedOperationException.class,() -> ap.getEncoded());
+        assertThrows(UnsupportedOperationException.class,() -> ap.getEncoded(null));
+        assertEquals("null", ap.toString());
+    }
+
+    @Test
+    public void testNullCipher() throws Exception {
+        Cipher c = Cipher.getInstance("null/mode/padding", JctProvider.getInstance());
+        assertEquals(16, c.getBlockSize());
+        assertNull(c.getIV());
+        assertThrows(UnsupportedOperationException.class,() -> c.getParameters());
+        c.init(Cipher.ENCRYPT_MODE, new NullPrivateKey(), SecureRandom.getInstance("NativePRNGNonBlocking"));
+        c.init(Cipher.ENCRYPT_MODE, new NullPrivateKey(), new IvParameterSpec(new byte[16]), SecureRandom.getInstance("NativePRNGNonBlocking"));
+        c.init(Cipher.ENCRYPT_MODE, new NullPrivateKey(), AlgorithmParameters.getInstance("null", JctProvider.getInstance()), SecureRandom.getInstance("NativePRNGNonBlocking"));
+
+        byte[] series = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+
+        assertArrayEquals(series, c.update(series));
+
+        assertArrayEquals(series, c.update(series, 0, 16));
+
+        byte[] out = new byte[series.length];
+        c.update(series, 0, 16, out);
+        assertArrayEquals(series, out);
+        
+        assertArrayEquals(series, c.doFinal(series));
+        assertEquals(16, c.doFinal(series, 0, 16, out, 0));
+        assertArrayEquals(series, out);
+
+        assertEquals(16, c.getOutputSize(16));
+    }
 }
