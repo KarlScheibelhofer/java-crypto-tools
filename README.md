@@ -1,6 +1,7 @@
 # java-crypto-tools
 
 [![Maven Central](https://img.shields.io/maven-central/v/dev.scheibelhofer/crypto-tools)](https://central.sonatype.com/artifact/dev.scheibelhofer/crypto-tools/)
+![Coverage](.github/badges/jacoco.svg)
 
 This library enables reading and writing keys and certificate in Java via the JCA KeyStore API.
 It includes a JCA provider implementing a `pem` type `KeyStore`. 
