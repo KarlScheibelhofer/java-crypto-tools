@@ -45,6 +45,8 @@ generate_pki() {
     generate_pem_alias "${_certificate_name}-enc.pem" "${_certificate_name}.crt" "${_ca_inter_name}.crt" "${_ca_root_name}.crt" | sed "s/Alias: .*/Alias: ${_certificate_name}/" > "${_certificate_name}-enc-keystore.pem"
 
     cat "${_ca_inter_name}.crt" "${_ca_root_name}.crt" > "${_certificate_name}-truststore.pem"
+
+    (echo "Alias: ${_certificate_name}"; openssl x509 -subject -issuer -serial -startdate -enddate -noout -in "${_certificate_name}.crt" | sed 's/=/: /;s/\(.\)/\U\1/'; cat "${_certificate_name}.crt") > "${_certificate_name}-explanatory.crt" 
 } 
 
 _passowrd="password"
