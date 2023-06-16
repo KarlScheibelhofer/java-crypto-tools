@@ -33,7 +33,6 @@ import org.junit.jupiter.api.Test;
 
 public class TestPemFileKeystore {
 
-
     @Test
     public void testLoadPemTruststore() throws Exception {
         JctProvider prov = new JctProvider();
