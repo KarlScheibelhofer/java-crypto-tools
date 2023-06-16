@@ -384,6 +384,7 @@ public class TestPemFileKeystore {
         ks.setCertificateEntry("orf.at", TestPemKeystore.getResourceCertificate("orf.at.crt"));
 
         File truststoreFile = new File("src/test/resources/out/", "truststore-alias-created.pem");
+        truststoreFile.getParentFile().mkdirs();
         try (FileOutputStream fos = new FileOutputStream(truststoreFile)) {
             ks.store(fos, null);
         }
