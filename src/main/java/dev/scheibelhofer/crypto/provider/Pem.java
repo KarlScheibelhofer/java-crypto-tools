@@ -49,15 +49,6 @@ class Pem {
         
     }
     
-    static class UnknownEntry extends Entry {
-        String pemBeginLine;
-        
-        UnknownEntry(String alias, String pemBeginLine) {
-            super(Type.unknown, alias);
-            this.pemBeginLine = pemBeginLine;
-        }
-    }
-    
     static class PrivateKeyEntry extends Entry {
         PrivateKey privateKey;
         
