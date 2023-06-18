@@ -29,8 +29,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.security.auth.x500.X500Principal;
-
 import dev.scheibelhofer.crypto.provider.Pem.CertificateEntry;
 import dev.scheibelhofer.crypto.provider.Pem.PrivateKeyEntry;
 
@@ -40,14 +38,12 @@ import dev.scheibelhofer.crypto.provider.Pem.PrivateKeyEntry;
 public abstract class PemKeystore extends KeyStoreSpi {
 
     final Map<String, Pem.PrivateKeyEntry> privateKeys = new LinkedHashMap<>();
-    final Map<String, Pem.EncryptedPrivateKeyEntry> encryptedPrivateKeys = new LinkedHashMap<>();
     final Map<String, List<Pem.CertificateEntry>> certificateChains = new LinkedHashMap<>();
     final Map<String, Pem.CertificateEntry> certificates = new LinkedHashMap<>();
     final Date creationDate = new Date();
 
     void clearKeystore() {
         privateKeys.clear();
-        encryptedPrivateKeys.clear();
         certificateChains.clear();
         certificates.clear();
     }
@@ -56,20 +52,21 @@ public abstract class PemKeystore extends KeyStoreSpi {
     public Key engineGetKey(String alias, char[] password) throws NoSuchAlgorithmException, UnrecoverableKeyException {
         Pem.PrivateKeyEntry privateKeyEntry = privateKeys.get(alias);
         if (privateKeyEntry != null) {
-            return privateKeyEntry.privateKey;
+            if (privateKeyEntry.privateKey != null) {
+                return privateKeyEntry.privateKey;
+            }
+            
+            if (privateKeyEntry instanceof Pem.EncryptedPrivateKeyEntry) {
+                Pem.EncryptedPrivateKeyEntry encryptedPrivateKeyEntry = (Pem.EncryptedPrivateKeyEntry) privateKeyEntry;
+                try {
+                    encryptedPrivateKeyEntry.decryptPrivateKey(password);
+                    return encryptedPrivateKeyEntry.privateKey;
+                } catch (PemKeystoreException e) {
+                    throw new NoSuchAlgorithmException("failed decrypting encrypted private key", e);
+                }
+            }         
         }
-
-        Pem.EncryptedPrivateKeyEntry encryptedPrivateKeyEntry = encryptedPrivateKeys.get(alias);
-        if (encryptedPrivateKeyEntry == null) {
-            return null;
-        }
-        try {
-            encryptedPrivateKeyEntry.decryptPrivateKey(password);
-            return encryptedPrivateKeyEntry.privateKey;
-        } catch (PemKeystoreException e) {
-            throw new NoSuchAlgorithmException("failed decrypting encrypted private key", e);
-
-        }
+        return null;
     }
 
     @Override
@@ -85,10 +82,14 @@ public abstract class PemKeystore extends KeyStoreSpi {
     @Override
     public Certificate engineGetCertificate(String alias) {
         Pem.CertificateEntry ce = certificates.get(alias);
-        if (ce == null) {
-            return null;
+        if (ce != null) {
+            return ce.certificate;
         }
-        return ce.certificate;
+        List<CertificateEntry> cerChain = certificateChains.get(alias);
+        if (cerChain != null) {
+            return cerChain.get(0).certificate;
+        }
+        return null;
     }
 
     @Override
@@ -117,7 +118,7 @@ public abstract class PemKeystore extends KeyStoreSpi {
     public void engineSetKeyEntry(String alias, byte[] encryptedKey, Certificate[] chain) throws KeyStoreException {
         Pem.EncryptedPrivateKeyEntry encryptedKeyEntry = new Pem.EncryptedPrivateKeyEntry(alias);
         encryptedKeyEntry.initFromEncoding(encryptedKey);
-        encryptedPrivateKeys.put(alias, encryptedKeyEntry);
+        privateKeys.put(alias, encryptedKeyEntry);
         List<Pem.CertificateEntry> certificateChain = Stream.of(chain)
             .filter(X509Certificate.class::isInstance)
             .map(X509Certificate.class::cast)
@@ -138,7 +139,6 @@ public abstract class PemKeystore extends KeyStoreSpi {
 
     @Override
     public void engineDeleteEntry(String alias) throws KeyStoreException {
-        encryptedPrivateKeys.remove(alias);
         privateKeys.remove(alias);
         certificateChains.remove(alias);
         certificates.remove(alias);
@@ -149,24 +149,22 @@ public abstract class PemKeystore extends KeyStoreSpi {
         Set<String> aliases = new HashSet<>();
         aliases.addAll(certificates.keySet());
         aliases.addAll(privateKeys.keySet());
-        aliases.addAll(encryptedPrivateKeys.keySet());
         return Collections.enumeration(aliases);
     }
 
     @Override
     public boolean engineContainsAlias(String alias) {
-        return certificates.containsKey(alias) || privateKeys.containsKey(alias)
-                || encryptedPrivateKeys.containsKey(alias);
+        return certificates.containsKey(alias) || privateKeys.containsKey(alias);
     }
 
     @Override
     public int engineSize() {
-        return certificates.size() + privateKeys.size() + encryptedPrivateKeys.size();
+        return certificates.size() + privateKeys.size();
     }
 
     @Override
     public boolean engineIsKeyEntry(String alias) {
-        return privateKeys.containsKey(alias) || encryptedPrivateKeys.containsKey(alias);
+        return privateKeys.containsKey(alias);
     }
 
     @Override
@@ -255,30 +253,9 @@ public abstract class PemKeystore extends KeyStoreSpi {
                 usedCertificates.addAll(certChain);
             }
         }
-        for (String alias : encryptedPrivateKeys.keySet()) {
-            Pem.EncryptedPrivateKeyEntry privateKeyEntry = encryptedPrivateKeys.get(alias);
-            List<Pem.CertificateEntry> certChain = buildChainFor(privateKeyEntry.privateKey, certList);
-            if (certChain.size() > 0) {
-                String newAlias;
-                if (privateKeyEntry.alias != null) {
-                    newAlias = alias;
-                } else {
-                    newAlias = makeAlias(certChain.get(0));
-                    encryptedPrivateKeys.remove(alias);
-                    encryptedPrivateKeys.put(newAlias, privateKeyEntry);
-                }
-                certificateChains.put(newAlias, certChain);
-                usedCertificates.addAll(certChain);
-            }
-        }
         // avoid certificates already used in cert chains to show up as trusted
         // certificates in addition
         certList.removeAll(usedCertificates);
-    }
-
-    String makeAlias(CertificateEntry certificateEntry) {
-        X500Principal subject = certificateEntry.certificate.getSubjectX500Principal();
-        return subject.getName();
     }
 
     static final String SUBJECT_KEY_ID = "2.5.29.14";
@@ -317,7 +294,11 @@ public abstract class PemKeystore extends KeyStoreSpi {
                 certSubjectKeyId.length - 20, certSubjectKeyId.length);
     }
 
-    String makeUniqueAlias(Set<String> existingAliases, String suggestedAlias) {
+    private String makeAlias(CertificateEntry certificateEntry) {
+        return certificateEntry.certificate.getSubjectX500Principal().getName();
+    }
+
+    private String makeUniqueAlias(Set<String> existingAliases, String suggestedAlias) {
         String alias = suggestedAlias;
         int i = 2;
         while (existingAliases.contains(alias)) {
@@ -333,9 +314,10 @@ public abstract class PemKeystore extends KeyStoreSpi {
         }
         if (entry instanceof Pem.PrivateKeyEntry) {
             return makeUniqueAlias(aliasSet, "private-key");
-        } else if (entry instanceof Pem.EncryptedPrivateKeyEntry) {
-            return makeUniqueAlias(aliasSet, "encrypted-private-key");
-        } 
+        }
+        if (entry instanceof Pem.CertificateEntry) {
+            return makeUniqueAlias(aliasSet, makeAlias((Pem.CertificateEntry) entry));
+        }
         return makeUniqueAlias(aliasSet, "entry");
     }
 

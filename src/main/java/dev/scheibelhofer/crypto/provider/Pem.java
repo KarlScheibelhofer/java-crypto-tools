@@ -25,7 +25,7 @@ import javax.crypto.spec.PBEKeySpec;
  */
 class Pem {
 
-    static class Entry {
+    static abstract class Entry {
         static enum Type {
             privateKey, certificate, encryptedPrivateKey, unknown
         }
@@ -56,12 +56,16 @@ class Pem {
             super(Type.privateKey, alias);
         }
         
+        PrivateKeyEntry(Type type, String alias) {
+            super(type, alias);
+        }
+        
         PrivateKeyEntry(String alias, PrivateKey privateKey) {
             this(alias);
             this.privateKey = privateKey;
             this.encoding = privateKey.getEncoded();
         }
-        
+
         @Override
         void initFromEncoding(byte[] encoding) {
             super.initFromEncoding(encoding);
@@ -74,7 +78,7 @@ class Pem {
             }
         }       
         
-        private PKCS8EncodedKeySpec createPkcs8KeySpec(byte[] encoding) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeySpecException, InvalidKeyException {
+        private static PKCS8EncodedKeySpec createPkcs8KeySpec(byte[] encoding) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeySpecException, InvalidKeyException {
             // we must tweak around a litte to access the PKCS#8 decoding feature only available in EncryptedPrivateKeyInfo
             AlgorithmParameters nullAlgorithmParam = AlgorithmParameters.getInstance("0.1", JctProvider.getInstance());
             EncryptedPrivateKeyInfo epki = new EncryptedPrivateKeyInfo(nullAlgorithmParam, encoding);
@@ -85,9 +89,8 @@ class Pem {
                 
     }
     
-    static class EncryptedPrivateKeyEntry extends Entry {
+    static class EncryptedPrivateKeyEntry extends PrivateKeyEntry {
         EncryptedPrivateKeyInfo encryptedPrivateKey;
-        PrivateKey privateKey;
 
         EncryptedPrivateKeyEntry(String alias) {
             super(Type.encryptedPrivateKey, alias);
@@ -95,7 +98,7 @@ class Pem {
 
         @Override
         void initFromEncoding(byte[] encoding) {
-            super.initFromEncoding(encoding);
+            this.encoding = encoding;
             try {
                 this.encryptedPrivateKey = new EncryptedPrivateKeyInfo(encoding);
             } catch (IOException e) {
@@ -175,9 +178,17 @@ class Pem {
             return true;
         }
         
-        
     }
     
+    static class UnknownEntry extends Entry {
+        String pemBeginLine;
+        
+        UnknownEntry(String alias, String pemBeginLine) {
+            super(Type.unknown, alias);
+            this.pemBeginLine = pemBeginLine;
+        }
+    }        
+
     final static String BEGIN = "-----BEGIN";
     final static String BEGIN_CERTIFICATE = "-----BEGIN CERTIFICATE-----";
     final static String END_CERTIFICATE = "-----END CERTIFICATE-----";

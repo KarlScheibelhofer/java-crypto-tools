@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Reeading PEM entries from a stream.
+ * Reading PEM entries from a stream.
  */
 class PemReader implements Closeable {
 
@@ -38,7 +38,7 @@ class PemReader implements Closeable {
     Pem.Entry readEntry() throws IOException {
         StringBuilder sb = new StringBuilder(1024);
         String line;
-        Pem.Entry entry = new Pem.Entry(Pem.Entry.Type.unknown);
+        Pem.Entry entry = new Pem.UnknownEntry(null, null);
         String alias = this.aliasCandidate;
 
         while ((line = reader.readLine()) != null && !line.startsWith(Pem.BEGIN)) {
@@ -56,6 +56,7 @@ class PemReader implements Closeable {
                 case Pem.BEGIN_CERTIFICATE:  entry = new Pem.CertificateEntry(alias); break;
                 case Pem.BEGIN_PRIVATE_KEY:  entry = new Pem.PrivateKeyEntry(alias); break;
                 case Pem.BEGIN_ENCRYPTED_PRIVATE_KEY:  entry = new Pem.EncryptedPrivateKeyEntry(alias); break;
+                default: entry = new Pem.UnknownEntry(alias, line);
             }
         }
 

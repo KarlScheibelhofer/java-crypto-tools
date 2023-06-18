@@ -35,7 +35,6 @@ public class PemDirectoryKeystore extends PemKeystore {
         }
 
         privateKeys.entrySet().stream().forEach(pke -> PemWriter.write(this.keystorePath.resolve(pke.getKey() + ".pem"), pke.getValue()));
-        encryptedPrivateKeys.entrySet().stream().forEach(epke -> PemWriter.write(this.keystorePath.resolve(epke.getKey() + ".pem"), epke.getValue()));
         certificateChains.entrySet().stream().forEach(cce -> PemWriter.write(this.keystorePath.resolve(cce.getKey() + ".crt"), cce.getValue()));
         certificates.entrySet().stream().forEach(pke -> PemWriter.write(this.keystorePath.resolve(pke.getKey() + ".crt"), pke.getValue()));
 
@@ -103,8 +102,8 @@ public class PemDirectoryKeystore extends PemKeystore {
                             break;
                         }
                         case encryptedPrivateKey: {
+                            privateKeys.put(makeUniqueAlias(privateKeys.keySet(), entry), (PrivateKeyEntry) entry);
                             Pem.EncryptedPrivateKeyEntry epk = (Pem.EncryptedPrivateKeyEntry) entry;
-                            encryptedPrivateKeys.put(makeUniqueAlias(encryptedPrivateKeys.keySet(), entry), epk);
                             try {
                                 epk.decryptPrivateKey(password);
                             } catch (PemKeystoreException e) {
@@ -123,6 +122,6 @@ public class PemDirectoryKeystore extends PemKeystore {
         }
         buildCertChains(certList);
         
-        certList.stream().forEach(c -> certificates.put(makeUniqueAlias(certificates.keySet(), c.certificate.getSubjectX500Principal().getName()), c));
+        certList.stream().forEach(c -> certificates.put(makeUniqueAlias(certificates.keySet(), c), c));
     }
 }

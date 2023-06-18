@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.security.Key;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
@@ -461,4 +463,48 @@ public class TestPemFileKeystore {
         }
     }
 
+    @Test
+    public void testLoadPemTruststoreAliasExplanatory() throws Exception {
+        JctProvider prov = new JctProvider();
+
+        KeyStore ks = KeyStore.getInstance("pem", prov);
+        Assertions.assertNotNull(ks);
+
+        ks.load(TestPemKeystore.getResource("truststore-alias-explanatory.pem"), null);
+        Assertions.assertEquals(4, ks.size());
+
+        Assertions.assertEquals(TestPemKeystore.getResourceCertificate("github.com.crt"), ks.getCertificate("github.com"));
+        Assertions.assertEquals(TestPemKeystore.getResourceCertificate("google.com.crt"), ks.getCertificate("google.com"));
+        Assertions.assertEquals(TestPemKeystore.getResourceCertificate("microsoft.com.crt"), ks.getCertificate("microsoft.com"));
+        Assertions.assertEquals(TestPemKeystore.getResourceCertificate("orf.at.crt"), ks.getCertificate("orf.at"));
+    }
+
+    @Test
+    public void testGetViaAlias() throws Exception {
+        KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());        
+        File keystoreFile = new File("src/test/resources/", "www.doesnotexist.org-EC-keystore-alias.pem");
+        ks.load(new FileInputStream(keystoreFile), null);
+
+        assertNull(ks.getKey("unknown-alias", null));
+        assertNull(ks.getCertificate("unknown-alias"));
+        assertNull(ks.getCertificateChain("unknown-alias"));
+
+        assertNotNull(ks.getKey("www.doesnotexist.org-EC", null));
+        assertNotNull(ks.getCertificateChain("www.doesnotexist.org-EC"));
+        assertNotNull(ks.getCertificate("www.doesnotexist.org-EC"));
+        Assertions.assertEquals(TestPemKeystore.getResourceCertificate("www.doesnotexist.org-EC.crt"), ks.getCertificate("www.doesnotexist.org-EC"));
+    }
+
+    @Test
+    public void testLoadEnc() throws Exception {
+        KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());        
+        File keystoreFile = new File("src/test/resources/", "www.doesnotexist.org-EC-enc.pem");
+        ks.load(new FileInputStream(keystoreFile), null);
+
+        assertNull(ks.getKey("unknown-alias", null));
+        assertNull(ks.getCertificate("unknown-alias"));
+        assertNull(ks.getCertificateChain("unknown-alias"));
+
+        assertThrowsExactly(NoSuchAlgorithmException.class, () -> ks.getKey("private-key", null));
+    }
 }
