@@ -18,7 +18,6 @@ public class PemFileKeystore extends PemKeystore {
             throws IOException, NoSuchAlgorithmException, CertificateException {
         try (final PemWriter pemOut = new PemWriter(stream, true)) {
             privateKeys.values().stream().forEach(pke -> pemOut.writeEntry(pke));
-            encryptedPrivateKeys.values().stream().forEach(epke -> pemOut.writeEntry(epke));
             certificateChains.values().stream().forEach(cce -> cce.stream().forEach(c -> pemOut.writeEntry(c)));
             certificates.values().stream().forEach(pke -> pemOut.writeEntry(pke));
         }
@@ -45,8 +44,8 @@ public class PemFileKeystore extends PemKeystore {
                         break;
                     }
                     case encryptedPrivateKey: {
+                        privateKeys.put(makeUniqueAlias(privateKeys.keySet(), entry), (PrivateKeyEntry) entry);
                         Pem.EncryptedPrivateKeyEntry epk = (Pem.EncryptedPrivateKeyEntry) entry;
-                        encryptedPrivateKeys.put(makeUniqueAlias(encryptedPrivateKeys.keySet(), entry), epk);
                         try {
                             epk.decryptPrivateKey(password);
                         } catch (PemKeystoreException e) {
@@ -62,7 +61,7 @@ public class PemFileKeystore extends PemKeystore {
             buildCertChains(certList);
 
             certList.stream().forEach(c -> certificates
-                    .put(makeUniqueAlias(certificates.keySet(), c.certificate.getSubjectX500Principal().getName()), c));
+                    .put(makeUniqueAlias(certificates.keySet(), c), c));
         } catch (PemKeystoreException e) {
             throw new IOException("error loading key", e);
         }

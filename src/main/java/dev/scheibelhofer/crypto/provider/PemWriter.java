@@ -36,7 +36,7 @@ class PemWriter implements Closeable, Flushable {
         }
     }
 
-    void writePemEntry(String alias, byte[] encoding, String beginLine, String endLine) {
+    private void writePemEntry(String alias, byte[] encoding, String beginLine, String endLine) {
         try {
             if (writeAliasLine && alias != null) {
                 writer.write("Alias: ");
@@ -49,6 +49,7 @@ class PemWriter implements Closeable, Flushable {
             writer.write("\n");
             writer.write(endLine);
             writer.write("\n");
+            writer.flush();
         } catch (IOException e) {
             throw new PemKeystoreException("failed writing PEM entry", e);
         }
@@ -64,15 +65,15 @@ class PemWriter implements Closeable, Flushable {
         this.writer.flush();
     }
 
-    public static void write(Path filePath, Pem.Entry entry){
+    static void write(Path filePath, Pem.Entry entry){
         try (PemWriter pw = new PemWriter(new FileOutputStream(filePath.toFile()), false)) {
-            pw.writeEntry(entry);;
+            pw.writeEntry(entry);
         } catch (IOException e) {
             throw new PemKeystoreException("failed writing PEM entry to file " + filePath, e);
         }
     }
 
-    public static void write(Path filePath, List<CertificateEntry> certificateChainEntries) {
+    static void write(Path filePath, List<CertificateEntry> certificateChainEntries) {
         try (PemWriter pw = new PemWriter(new FileOutputStream(filePath.toFile()), false)) {
             certificateChainEntries.stream().forEach(c -> pw.writeEntry(c));
         } catch (IOException e) {
