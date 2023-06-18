@@ -56,6 +56,7 @@ class PemReader implements Closeable {
                 case Pem.BEGIN_CERTIFICATE:  entry = new Pem.CertificateEntry(alias); break;
                 case Pem.BEGIN_PRIVATE_KEY:  entry = new Pem.PrivateKeyEntry(alias); break;
                 case Pem.BEGIN_ENCRYPTED_PRIVATE_KEY:  entry = new Pem.EncryptedPrivateKeyEntry(alias); break;
+                default: entry = new Pem.UnknownEntry(alias, line);
             }
         }
 
