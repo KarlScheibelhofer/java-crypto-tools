@@ -34,10 +34,6 @@ class Pem {
         byte[] encoding;
         String alias;
 
-        Entry(Type type) {
-            this.type = type;
-        }
-
         Entry(Type type, String alias) {
             this.type = type;
             this.alias = alias;
