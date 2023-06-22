@@ -26,7 +26,7 @@ public class PemWriterTest {
         };
 
     @Test
-    void testClose() throws Exception {
+    public void testClose() throws Exception {
         OutputStream mockedOS = mock(OutputStream.class);
         
         PemWriter pw = new PemWriter(mockedOS, false);
@@ -36,7 +36,7 @@ public class PemWriterTest {
     }
     
     @Test
-    void testFlush() throws Exception {
+    public void testFlush() throws Exception {
         OutputStream mockedOS = mock(OutputStream.class);
         
         PemWriter pw = new PemWriter(mockedOS, false);
@@ -48,7 +48,7 @@ public class PemWriterTest {
     }
     
     @Test
-    void testWriteEntryEx() throws Exception {
+    public void testWriteEntryEx() throws Exception {
         OutputStream exceptionOS = new ExOutputStream();
 
         PemWriter pw = new PemWriter(exceptionOS, false);
@@ -59,7 +59,7 @@ public class PemWriterTest {
     }
 
     @Test
-    void testWriteToPath() throws Exception {
+    public void testWriteToPath() throws Exception {
         File f = new File("src/test/resources/read-only");
         f.createNewFile();
         f.setReadOnly();
@@ -69,7 +69,7 @@ public class PemWriterTest {
     }
 
     @Test
-    void testWriteListToPath() throws Exception {
+    public void testWriteListToPath() throws Exception {
         File f = new File("src/test/resources/read-only");
         f.createNewFile();
         f.setReadOnly();
@@ -79,7 +79,7 @@ public class PemWriterTest {
     }
 
     @Test
-    void testWriteUnknownEntry() throws Exception {
+    public void testWriteUnknownEntry() throws Exception {
         OutputStream mockedOS = mock(OutputStream.class);
         
         PemWriter pw = new PemWriter(mockedOS, false);
