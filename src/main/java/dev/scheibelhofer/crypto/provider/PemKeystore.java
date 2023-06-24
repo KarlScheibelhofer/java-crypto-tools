@@ -101,16 +101,16 @@ public abstract class PemKeystore extends KeyStoreSpi {
     public void engineSetKeyEntry(String alias, Key key, char[] password, Certificate[] chain)
             throws KeyStoreException {
         if (key instanceof PrivateKey) {
-            if (password == null) {
-                PrivateKeyEntry keyEntry = new Pem.PrivateKeyEntry(alias, (PrivateKey) key);
-                privateKeys.put(alias, keyEntry);
-                List<Pem.CertificateEntry> certificateChain = Stream.of(chain)
-                    .filter(X509Certificate.class::isInstance)
-                    .map(X509Certificate.class::cast)
-                    .map(c -> new Pem.CertificateEntry(alias, c))
-                    .collect(Collectors.toList());
-                certificateChains.put(alias, certificateChain);
-            }
+            PrivateKeyEntry keyEntry = (password == null) 
+                ? new Pem.PrivateKeyEntry(alias, (PrivateKey) key)
+                : new Pem.EncryptedPrivateKeyEntry(alias, (PrivateKey) key, password);
+            privateKeys.put(alias, keyEntry);
+            List<Pem.CertificateEntry> certificateChain = Stream.of(chain)
+                .filter(X509Certificate.class::isInstance)
+                .map(X509Certificate.class::cast)
+                .map(c -> new Pem.CertificateEntry(alias, c))
+                .collect(Collectors.toList());
+            certificateChains.put(alias, certificateChain);
         } else {
             throw new KeyStoreException("Key must be a java.security.PrivateKey. Unsupported key: " + key);
         }
