@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -232,4 +233,30 @@ public class TestPemDirectoryKeystore {
 
         Security.removeProvider(JctProvider.getInstance().getName());
     }
+
+    @Test
+    public void testBasename() throws Exception {
+        assertEquals("dummy", PemDirectoryKeystore.getFileBasename(Path.of("dummy")));
+        assertEquals("dummy", PemDirectoryKeystore.getFileBasename(Path.of("dummy.crt")));
+    }
+
+   @Test
+    public void loadKeystoreDecryptWroangPassword() throws Exception {
+        KeyStore ks = KeyStore.getInstance("pem-directory", JctProvider.getInstance());
+        
+        String password = "password";
+        String wrongPassword = "secret";
+        try (InputStream is = new ByteArrayInputStream("src/test/resources/dir-keystore-enc".getBytes(StandardCharsets.UTF_8))) {
+            ks.load(is, wrongPassword.toCharArray());
+        }
+        Assertions.assertEquals(2, ks.size());
+        String alias = "www.doesnotexist.org-EC-enc";
+
+        assertTrue(ks.isKeyEntry(alias));
+        assertNotNull(ks.getKey(alias, password.toCharArray()));
+        Certificate[] certChain = ks.getCertificateChain(alias);
+        assertNull(certChain);
+        assertNotNull(ks.getCertificate(alias));
+    }    
+    
 }

@@ -14,8 +14,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.security.Key;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -506,5 +508,24 @@ public class TestPemFileKeystore {
         assertNull(ks.getCertificateChain("unknown-alias"));
 
         assertThrowsExactly(NoSuchAlgorithmException.class, () -> ks.getKey("private-key", null));
+    }
+
+    @Test
+    public void testUnsupportedKey() throws Exception {
+        KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
+        ks.load(null, null);
+
+        assertThrowsExactly(KeyStoreException.class, () ->  ks.setKeyEntry("alias", null, null, null));
+        
+        PublicKey publicKey1a = TestPemKeystore.getResourceCertificate("www.doesnotexist.org-RSA.crt").getPublicKey();
+        assertThrowsExactly(KeyStoreException.class, () ->  ks.setKeyEntry("alias", publicKey1a, null, null));
+    }
+
+    @Test
+    public void testUnsupportedCertificate() throws Exception {
+        KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
+        ks.load(null, null);
+
+        assertThrowsExactly(KeyStoreException.class, () ->  ks.setCertificateEntry("alias", null));
     }
 }

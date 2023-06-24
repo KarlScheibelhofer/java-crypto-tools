@@ -3,14 +3,17 @@ package dev.scheibelhofer.crypto.provider;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,6 +35,7 @@ import java.security.interfaces.ECPublicKey;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 import javax.crypto.Cipher;
@@ -175,5 +179,25 @@ public class TestPemKeystore {
        assertFalse(PemKeystore.matching(publicKey1a, privateKeyRSA));
        assertFalse(PemKeystore.matching(publicKey1a, privateKeyEC));
        assertFalse(PemKeystore.matching(publicKeyEC, privateKeyRSA));
+    }
+
+    @Test
+    public void testMatchingIDs() throws Exception {
+       assertTrue(PemKeystore.matchingKeyIDs(null, null));
+       
+       X509Certificate cert = TestPemKeystore.getResourceCertificate("www.doesnotexist.org-RSA.crt");
+       assertTrue(PemKeystore.matchingKeyIDs(null, cert));
+       
+       X509Certificate mockCert = mock(X509Certificate.class, CALLS_REAL_METHODS);
+       String SUBJECT_KEY_ID = "2.5.29.14";
+       when(mockCert.getExtensionValue(SUBJECT_KEY_ID)).thenReturn(null);
+       assertTrue(PemKeystore.matchingKeyIDs(new byte[] {1, 2, 3}, mockCert));
+    }
+
+    @Test
+    public void testMakeUniqueAlias() throws Exception {
+       String alias = PemKeystore.makeUniqueAlias(Collections.emptySet(), new Pem.UnknownEntry(null, "-----BEGIN UNKNOWN-----"));
+       assertNotNull(alias);
+       assertThat(alias, startsWith("entry"));
     }
 }

@@ -111,6 +111,8 @@ public abstract class PemKeystore extends KeyStoreSpi {
                     .collect(Collectors.toList());
                 certificateChains.put(alias, certificateChain);
             }
+        } else {
+            throw new KeyStoreException("Key must be a java.security.PrivateKey. Unsupported key: " + key);
         }
     }
 
@@ -130,7 +132,7 @@ public abstract class PemKeystore extends KeyStoreSpi {
     @Override
     public void engineSetCertificateEntry(String alias, Certificate cert) throws KeyStoreException {
         if (!(cert instanceof X509Certificate)) {
-            throw new KeyStoreException("certificate entry must be of type java.security.cert.X509Certificate, but is " + cert.getClass());
+            throw new KeyStoreException("certificate entry must be of type java.security.cert.X509Certificate, but is " + cert);
         }
         X509Certificate x509Cert = (X509Certificate) cert;
         Pem.CertificateEntry certEntry = new Pem.CertificateEntry(alias, x509Cert);
@@ -294,11 +296,11 @@ public abstract class PemKeystore extends KeyStoreSpi {
                 certSubjectKeyId.length - 20, certSubjectKeyId.length);
     }
 
-    private String makeAlias(CertificateEntry certificateEntry) {
+    private static String makeAlias(CertificateEntry certificateEntry) {
         return certificateEntry.certificate.getSubjectX500Principal().getName();
     }
 
-    private String makeUniqueAlias(Set<String> existingAliases, String suggestedAlias) {
+    private static String makeUniqueAlias(Set<String> existingAliases, String suggestedAlias) {
         String alias = suggestedAlias;
         int i = 2;
         while (existingAliases.contains(alias)) {
@@ -308,7 +310,7 @@ public abstract class PemKeystore extends KeyStoreSpi {
         return alias;
     }
 
-    String makeUniqueAlias(Set<String> aliasSet, Pem.Entry entry) {
+    static String makeUniqueAlias(Set<String> aliasSet, Pem.Entry entry) {
         if (entry.alias != null) {
             return makeUniqueAlias(aliasSet, entry.alias);
         }
