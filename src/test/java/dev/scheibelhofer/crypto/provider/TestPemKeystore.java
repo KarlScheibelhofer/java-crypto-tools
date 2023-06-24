@@ -28,6 +28,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPrivateKey;
@@ -200,4 +201,45 @@ public class TestPemKeystore {
        assertNotNull(alias);
        assertThat(alias, startsWith("entry"));
     }
+
+    @Test
+    public void testGetCertificateAliasUnknown() throws Exception {
+        // cannot touch all code branches via regular KeyStore API
+        
+        PemFileKeystore pemFileKeystoreEngine = new PemFileKeystore();
+
+        PrivateKey privateKey = TestPemKeystore.readPrivateKey(new File("src/test/resources", "rsa-2048.pem"), "RSA", null);
+
+        Certificate[] chain0 = new Certificate[0];
+        pemFileKeystoreEngine.engineSetKeyEntry("alias", privateKey, null, chain0);
+
+        X509Certificate mockCert = mock(X509Certificate.class);
+        assertNull(pemFileKeystoreEngine.engineGetCertificateAlias(mockCert));
+        
+        Certificate[] chain1 = new Certificate[] { mockCert };
+        pemFileKeystoreEngine.engineSetKeyEntry("alias", privateKey, null, chain1);
+        X509Certificate mockCert2 = mock(X509Certificate.class);
+        assertNull(pemFileKeystoreEngine.engineGetCertificateAlias(mockCert2));
+    }
+
+    @Test
+    public void testContainsAliasKS() throws Exception {
+        KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());        
+        File keystoreFile = new File("src/test/resources/", "rsa-2048.pem");
+        ks.load(new FileInputStream(keystoreFile), null);
+
+        assertTrue(ks.containsAlias("private-key"));
+        assertFalse(ks.containsAlias("unknown-key"));
+    }
+        
+    @Test
+    public void testContainsAliasTS() throws Exception {
+        KeyStore ts = KeyStore.getInstance("pem", JctProvider.getInstance());        
+        File truststoreFile = new File("src/test/resources/", "truststore.pem");
+        ts.load(new FileInputStream(truststoreFile), null);
+
+        assertTrue(ts.containsAlias("CN=github.com,O=GitHub\\, Inc.,L=San Francisco,ST=California,C=US"));
+        assertFalse(ts.containsAlias("unknown-certificate"));
+    }
+        
 }

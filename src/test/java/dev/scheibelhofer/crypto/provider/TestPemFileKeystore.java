@@ -333,6 +333,8 @@ public class TestPemFileKeystore {
             }
         }
         assertTrue(checked);
+
+        assertNull(ks.getCertificateAlias(null));
     }
 
     @Test
@@ -350,15 +352,10 @@ public class TestPemFileKeystore {
     }
 
     @Test
-    public void testGetCertificateAliasUnknown() throws Exception {
-        File originalKeystore = new File("src/test/resources", "www.doesnotexist.org-RSA-keystore.pem");
-        char[] password = "password".toCharArray();
+    public void testGetCertificateAliasEmptyChain() throws Exception {
 
-        KeyStore ks = loadKeyStore(originalKeystore, password);
-
-        X509Certificate eeCert = TestPemKeystore.getResourceCertificate("www.doesnotexist.org-EC.crt");
-        assertNull(ks.getCertificateAlias(eeCert));
-    }
+        checkPrivateKey("rsa-2048.pem", "pem", null, RSAPrivateKey.class);
+    }    
 
     @Test
     public void testReadAlias() throws Exception {
