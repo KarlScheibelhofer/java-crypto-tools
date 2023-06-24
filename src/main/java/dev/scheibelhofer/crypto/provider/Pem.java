@@ -23,7 +23,11 @@ import javax.crypto.spec.PBEKeySpec;
 /**
  * Internal support class for reading and writing PEM format keys and certificates.
  */
-class Pem {
+abstract class Pem {
+
+    private Pem() {
+        // empty
+    }
 
     static abstract class Entry {
         static enum Type {
