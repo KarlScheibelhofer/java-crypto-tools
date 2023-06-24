@@ -260,6 +260,45 @@ public class TestPemFileKeystore {
     }
 
     @Test
+    public void testCreateRsaKeystoreWithChainAndPW() throws Exception {
+        KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
+        ks.load(null, null);
+
+        File certFile = new File("src/test/resources", "www.doesnotexist.org-RSA.crt");
+        File caCertFile = new File("src/test/resources", "Test-Intermediate-CA-RSA.crt");
+        File rootCertFile = new File("src/test/resources", "Test-Root-CA-RSA.crt");
+        File keyFile = new File("src/test/resources", "www.doesnotexist.org-RSA.pem");
+        String password = "password";
+        String alias = "www.doesnotexist.org-RSA";
+
+        PrivateKey privateKey = TestPemKeystore.readPrivateKey(keyFile, "RSA", password);
+        X509Certificate certificate = TestPemKeystore.readCertificate(certFile);
+        X509Certificate caCertificate = TestPemKeystore.readCertificate(caCertFile);
+        X509Certificate rootCertificate = TestPemKeystore.readCertificate(rootCertFile);
+
+        Certificate[] certChain = new Certificate[] { certificate, caCertificate, rootCertificate };
+        ks.setKeyEntry(alias, privateKey, password.toCharArray(), certChain);
+
+        File keystoreFile = new File("src/test/resources/out/", "www.doesnotexist.org-RSA-keystore-created2.pem");
+        keystoreFile.getParentFile().mkdirs();
+        try (FileOutputStream fos = new FileOutputStream(keystoreFile)) {
+            ks.store(fos, password.toCharArray());
+        }
+
+        assertEquals(1, ks.size());
+        
+        KeyStore ksReloaded = KeyStore.getInstance("pem", JctProvider.getInstance());
+        try (FileInputStream fis = new FileInputStream(keystoreFile)) {
+            ksReloaded.load(fis, password.toCharArray());
+        }
+        assertEquals(1, ksReloaded.size());
+        assertTrue(ksReloaded.containsAlias(alias));
+        assertTrue(ksReloaded.isKeyEntry(alias));
+
+        //TODO
+    }
+
+    @Test
     public void testCreateTrustKeystore() throws Exception {
         KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
         ks.load(null, null);

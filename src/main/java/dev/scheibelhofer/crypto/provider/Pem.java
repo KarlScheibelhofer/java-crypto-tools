@@ -3,11 +3,13 @@ package dev.scheibelhofer.crypto.provider;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.AlgorithmParameters;
+import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.SecureRandom;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -19,6 +21,7 @@ import javax.crypto.EncryptedPrivateKeyInfo;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
 
 /**
  * Internal support class for reading and writing PEM format keys and certificates.
@@ -95,6 +98,12 @@ abstract class Pem {
         EncryptedPrivateKeyEntry(String alias) {
             super(Type.encryptedPrivateKey, alias);
         }
+        
+        public EncryptedPrivateKeyEntry(String alias, PrivateKey key, char[] password) {
+            super(Type.encryptedPrivateKey, alias);
+            this.privateKey = key;
+            encryptPrivateKey(password);
+        }
 
         @Override
         void initFromEncoding(byte[] encoding) {
@@ -123,6 +132,43 @@ abstract class Pem {
                 throw new PemKeystoreException("error decrypting private key", e);
             }
         }        
+
+        void encryptPrivateKey(char[] password) {
+            try {
+                PBEKeySpec pbeKeySpec = new PBEKeySpec(password);
+                String pbes2Name = "PBEWithHmacSHA256AndAES_256";
+                SecretKeyFactory skf = SecretKeyFactory.getInstance(pbes2Name);
+                Key pbeKey = skf.generateSecret(pbeKeySpec);
+
+                Cipher cipher = Cipher.getInstance(pbes2Name);
+
+                byte[] salt = new byte[8];
+                SecureRandom.getInstance("NativePRNGNonBlocking").nextBytes(salt);
+                int iterations = 2048;
+                PBEParameterSpec pbeParamSpec = new PBEParameterSpec(salt, iterations);
+
+                cipher.init(Cipher.ENCRYPT_MODE, pbeKey, pbeParamSpec);
+
+                KeyFactory kf = KeyFactory.getInstance(this.privateKey.getAlgorithm());
+                PKCS8EncodedKeySpec pkcs8keyspec = kf.getKeySpec(this.privateKey, PKCS8EncodedKeySpec.class);
+                byte[] encodedPlainPrivateKey = pkcs8keyspec.getEncoded();
+
+                byte[] encryptedData = cipher.doFinal(encodedPlainPrivateKey);
+                
+                // {iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-5(5) pkcs5PBES2(13)}
+                // String algorithmName = "1.2.840.113549.1.5.13";
+                AlgorithmParameters pbeAlgParams = AlgorithmParameters.getInstance(pbes2Name);
+                pbeAlgParams.init(pbeParamSpec);
+                // TODO: pbeAlgParams is encoded incomplete
+                // compare
+                // base64 --decode rsa-2048-aes128.b64| dumpasn1 -
+                // base64 --decode www.doesnotexist.org-RSA-keystore-created.b64| dumpasn1 -
+                this.encryptedPrivateKey = new EncryptedPrivateKeyInfo(pbeAlgParams, encryptedData);
+                this.encoding = this.encryptedPrivateKey.getEncoded();
+            } catch (GeneralSecurityException | IOException e) {
+                throw new PemKeystoreException("error encrypting private key", e);
+            }
+        }
     }
     
     static class CertificateEntry extends Entry {
