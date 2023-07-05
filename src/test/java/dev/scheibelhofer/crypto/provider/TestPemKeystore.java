@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 import javax.crypto.Cipher;
 import javax.crypto.EncryptedPrivateKeyInfo;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEParameterSpec;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -133,6 +134,23 @@ public class TestPemKeystore {
         assertThrows(UnsupportedOperationException.class,() -> ap.getEncoded());
         assertThrows(UnsupportedOperationException.class,() -> ap.getEncoded(null));
         assertEquals("null", ap.toString());
+    }
+
+    @Test
+    public void testPBES2AlgorithmParameters() throws Exception {
+        PBEParameterSpec pbeParamSpec = new PBEParameterSpec(new byte[8], 2048, new IvParameterSpec(new byte[16]));
+        AlgorithmParameters pbeAlgParams = AlgorithmParameters.getInstance("PBES2", JctProvider.getInstance());
+        pbeAlgParams.init(pbeParamSpec);
+
+        AlgorithmParameters.getInstance("PBES2", JctProvider.getInstance()).init(pbeAlgParams.getEncoded(), "any");
+        AlgorithmParameters.getInstance("PBES2", JctProvider.getInstance()).init(pbeAlgParams.getEncoded());
+        AlgorithmParameters.getInstance("PBES2", JctProvider.getInstance()).init(pbeParamSpec);
+        AlgorithmParameters ap = AlgorithmParameters.getInstance("PBES2", JctProvider.getInstance());
+        ap.init(pbeAlgParams.getEncoded());
+        assertNotNull(ap.getParameterSpec(PBEParameterSpec.class));
+        assertNotNull(ap.getEncoded());
+        assertNotNull(ap.getEncoded("any"));
+        assertEquals("PBEWithHmacSHA256AndAES_256", ap.toString());
     }
 
     @Test

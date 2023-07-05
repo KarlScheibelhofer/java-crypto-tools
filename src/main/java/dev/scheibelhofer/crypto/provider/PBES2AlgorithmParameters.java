@@ -14,13 +14,8 @@ public class PBES2AlgorithmParameters extends AlgorithmParametersSpi {
 
     AlgorithmParameters delegateAlgoParams;
 
-    public PBES2AlgorithmParameters() {
-        final String algParamName = "PBEWithHmacSHA256AndAES_256";
-        try {
-            delegateAlgoParams = AlgorithmParameters.getInstance(algParamName);
-        } catch (NoSuchAlgorithmException e) {
-            throw new PemKeystoreException("unsupported but required AlgorithmParameters " + algParamName, e);
-        }
+    public PBES2AlgorithmParameters() throws NoSuchAlgorithmException {
+        delegateAlgoParams = AlgorithmParameters.getInstance("PBEWithHmacSHA256AndAES_256");
     }
 
     @Override

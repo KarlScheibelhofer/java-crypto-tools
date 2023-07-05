@@ -6,7 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import java.security.PrivateKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 
@@ -52,4 +54,12 @@ public class PemTest {
         ce0a.hashCode();
     }
 
+    @Test
+    public void testPrivateKeyEncryptionException() throws Exception {
+        PrivateKey mockedKey = mock(PrivateKey.class, CALLS_REAL_METHODS);
+        when(mockedKey.getAlgorithm()).thenReturn("invalid-algorithm-name");
+
+        char[] password = null;
+        assertThrowsExactly(PemKeystoreException.class, () -> new Pem.EncryptedPrivateKeyEntry("alias", mockedKey, password));
+    }
 }
