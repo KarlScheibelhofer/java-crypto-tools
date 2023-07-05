@@ -40,6 +40,7 @@ public class TestPemDirectoryKeystore {
 
         String caCertsDirPath = Paths.get("src/test/resources/ca-certificates").toFile().getAbsolutePath();
         Path pemKeystoreDirFile = Paths.get("src/test/resources/out", "ca-certificates.pem-folder");
+        pemKeystoreDirFile.getParent().toFile().mkdirs();
         Files.writeString(pemKeystoreDirFile, caCertsDirPath, StandardCharsets.UTF_8);
 
         try (FileInputStream is = new FileInputStream(pemKeystoreDirFile.toFile())) {
@@ -68,6 +69,7 @@ public class TestPemDirectoryKeystore {
         deleteDirectory(caCertsDirPath);
 
         Path pemKeystoreDirFile = Paths.get("src/test/resources/out/truststore.pem-directory");
+        pemKeystoreDirFile.getParent().toFile().mkdirs();
         Files.writeString(pemKeystoreDirFile, caCertsDirPath.toFile().getAbsolutePath(), StandardCharsets.UTF_8);
 
         try (FileInputStream is = new FileInputStream(pemKeystoreDirFile.toFile())) {
