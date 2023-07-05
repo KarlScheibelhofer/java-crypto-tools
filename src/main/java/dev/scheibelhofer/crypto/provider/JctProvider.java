@@ -39,6 +39,7 @@ public class JctProvider extends Provider {
         putService(new Provider.Service(this, "KeyStore", "pem", PemFileKeystore.class.getName(), null, null));
         putService(new Provider.Service(this, "KeyStore", "pem-directory", PemDirectoryKeystore.class.getName(), null, null));
         putService(new Provider.Service(this, "AlgorithmParameters", "null", NullAlgorithmParameters.class.getName(), List.of("0.1"), null));
+        putService(new Provider.Service(this, "AlgorithmParameters", "PBES2", PBES2AlgorithmParameters.class.getName(), List.of("0.1"), null));
         putService(new Provider.Service(this, "Cipher", "null", NullCipher.class.getName(), null, null));
     }
 

@@ -20,6 +20,7 @@ import javax.crypto.Cipher;
 import javax.crypto.EncryptedPrivateKeyInfo;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 
@@ -145,7 +146,10 @@ abstract class Pem {
                 byte[] salt = new byte[8];
                 SecureRandom.getInstance("NativePRNGNonBlocking").nextBytes(salt);
                 int iterations = 2048;
-                PBEParameterSpec pbeParamSpec = new PBEParameterSpec(salt, iterations);
+                byte[] iv = new byte[16];
+                SecureRandom.getInstance("NativePRNGNonBlocking").nextBytes(iv);
+                IvParameterSpec ivParamSpec = new IvParameterSpec(iv);
+                PBEParameterSpec pbeParamSpec = new PBEParameterSpec(salt, iterations, ivParamSpec);
 
                 cipher.init(Cipher.ENCRYPT_MODE, pbeKey, pbeParamSpec);
 
@@ -155,9 +159,7 @@ abstract class Pem {
 
                 byte[] encryptedData = cipher.doFinal(encodedPlainPrivateKey);
                 
-                // {iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-5(5) pkcs5PBES2(13)}
-                // String algorithmName = "1.2.840.113549.1.5.13";
-                AlgorithmParameters pbeAlgParams = AlgorithmParameters.getInstance(pbes2Name);
+                AlgorithmParameters pbeAlgParams = AlgorithmParameters.getInstance("PBES2", JctProvider.getInstance());
                 pbeAlgParams.init(pbeParamSpec);
                 // TODO: pbeAlgParams is encoded incomplete
                 // compare
