@@ -7,7 +7,7 @@
 
   <groupId>dev.scheibelhofer</groupId>
   <artifactId>crypto-tools</artifactId>
-  <version>0.0.8-SNAPSHOT</version>
+  <version>0.0.9-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>${project.groupId}:${project.artifactId}</name>
