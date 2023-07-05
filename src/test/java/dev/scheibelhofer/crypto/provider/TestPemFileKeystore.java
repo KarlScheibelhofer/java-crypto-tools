@@ -1,5 +1,6 @@
 package dev.scheibelhofer.crypto.provider;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -295,7 +296,8 @@ public class TestPemFileKeystore {
         assertTrue(ksReloaded.containsAlias(alias));
         assertTrue(ksReloaded.isKeyEntry(alias));
 
-        //TODO
+        assertEquals(privateKey, ksReloaded.getKey(alias, password.toCharArray()));
+        assertArrayEquals(certChain, ksReloaded.getCertificateChain(alias));
     }
 
     @Test
