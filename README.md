@@ -4,16 +4,16 @@
 ![Coverage](.github/badges/jacoco.svg)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-This library enables reading and writing keys and certificate in Java via the JCA KeyStore API.
+This library enables reading and writing keys and certificates in Java via the JCA KeyStore API.
 It includes a JCA provider implementing a `pem` type `KeyStore`. 
-It allows reading and writing unencrypted or encrypted  private keys and certificates.
-This library is small and has no dependencies, just standard Java Runtime.
+It allows reading and writing unencrypted or encrypted private keys and certificates.
+This library is small and has no dependencies other tan standard Java Runtime.
 
 It enables easy integration of PEM keystores like the PEM version of the Common CA Database from Mozilla.
 
 Many software products use PEM (see [RFC 7468](https://www.rfc-editor.org/rfc/rfc7468)) as format for cryptographic keys and certificates.
 PEM format, as known in OpenSSL and many system based on it, is one of the most versatile formats for this type of data.
-If you get keys or certificates, it is most likely that you get it in PEM.
+If you get keys or certificates, it is most likely that you get it in PEM format.
 To use it in Java, you typically had to import it in a Java keystore of type JKS or PKCS12.
 With this library, this conversion is no longer required.
 You can read and write PEM files directly without the need for conversion.
