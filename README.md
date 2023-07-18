@@ -14,7 +14,7 @@ It enables easy integration of PEM keystores like the PEM version of the Common 
 Many software products use PEM (see [RFC 7468](https://www.rfc-editor.org/rfc/rfc7468)) as format for cryptographic keys and certificates.
 PEM format, as known in OpenSSL and many system based on it, is one of the most versatile formats for this type of data.
 If you get keys or certificates, it is most likely that you get it in PEM format.
-To use it in Java, you typically had to import it in a Java keystore of type JKS or PKCS12.
+To use it in Java, you typically had to import it in a Java keystore of type `JKS` or `PKCS12`.
 With this library, this conversion is no longer required.
 You can read and write PEM files directly without the need for conversion.
 
@@ -112,7 +112,7 @@ try (FileOutputStream fos = new FileOutputStream(keystoreFile)) {
 
 #### Aliases
 
-The PEM format usually does not contain names for its entries.
+The PEM format usually does not contain names for entries.
 Thus, this implementation usually generates artificial key aliases on loading a keystore.
 For private key entries with associated certificate chains, the end entity's certificate subject DN in its RFC 2253 format is used as alias name of the entry.
 
@@ -293,7 +293,7 @@ Caused by: java.io.IOException: PBE parameter parsing error: expecting the objec
 ```
 
 Old versions of openssl may use `des3` as default cipher for encrypting private keys.
-Even new version can use `des3` if specified explicitely, e.g.:
+Even new version can use `des3` if specified explicitly, e.g.:
 
 ```
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out private-key-des3.pem -pass pass:password -des3
