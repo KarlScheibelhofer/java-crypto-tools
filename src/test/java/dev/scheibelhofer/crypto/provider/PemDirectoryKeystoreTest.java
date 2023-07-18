@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class TestPemDirectoryKeystore {
+public class PemDirectoryKeystoreTest {
 
     @Test
     public void loadTruststoreDirectory() throws Exception {
@@ -76,12 +76,12 @@ public class TestPemDirectoryKeystore {
             ks.load(is, null);
         }
 
-        ks.setCertificateEntry("test-root-ca-rsa", TestPemKeystore.getResourceCertificate("Test-Root-CA-RSA.crt"));
+        ks.setCertificateEntry("test-root-ca-rsa", PemKeystoreTest.getResourceCertificate("Test-Root-CA-RSA.crt"));
         ks.setCertificateEntry("test-intermediate-ca-rsa",
-                TestPemKeystore.getResourceCertificate("Test-Intermediate-CA-RSA.crt"));
-        ks.setCertificateEntry("test-root-ca-ec", TestPemKeystore.getResourceCertificate("Test-Root-CA-EC.crt"));
+                PemKeystoreTest.getResourceCertificate("Test-Intermediate-CA-RSA.crt"));
+        ks.setCertificateEntry("test-root-ca-ec", PemKeystoreTest.getResourceCertificate("Test-Root-CA-EC.crt"));
         ks.setCertificateEntry("test-intermediate-ca-ec",
-                TestPemKeystore.getResourceCertificate("Test-Intermediate-CA-EC.crt"));
+                PemKeystoreTest.getResourceCertificate("Test-Intermediate-CA-EC.crt"));
 
         final AtomicBoolean osClosed = new AtomicBoolean(false);
         OutputStream dummyOs = new OutputStream() {
@@ -110,13 +110,13 @@ public class TestPemDirectoryKeystore {
         assertTrue(Files.exists(caCertsDirPath.resolve("test-intermediate-ca-ec.crt")));
 
         Path resourcesDir = Paths.get("src/test/resources/");
-        TestPemKeystore.assertFilesEqual(resourcesDir.resolve("Test-Root-CA-RSA.crt"),
+        PemKeystoreTest.assertFilesEqual(resourcesDir.resolve("Test-Root-CA-RSA.crt"),
                 caCertsDirPath.resolve("test-root-ca-rsa.crt"));
-        TestPemKeystore.assertFilesEqual(resourcesDir.resolve("Test-Intermediate-CA-RSA.crt"),
+        PemKeystoreTest.assertFilesEqual(resourcesDir.resolve("Test-Intermediate-CA-RSA.crt"),
                 caCertsDirPath.resolve("test-intermediate-ca-rsa.crt"));
-        TestPemKeystore.assertFilesEqual(resourcesDir.resolve("Test-Root-CA-EC.crt"),
+        PemKeystoreTest.assertFilesEqual(resourcesDir.resolve("Test-Root-CA-EC.crt"),
                 caCertsDirPath.resolve("test-root-ca-ec.crt"));
-        TestPemKeystore.assertFilesEqual(resourcesDir.resolve("Test-Intermediate-CA-EC.crt"),
+        PemKeystoreTest.assertFilesEqual(resourcesDir.resolve("Test-Intermediate-CA-EC.crt"),
                 caCertsDirPath.resolve("test-intermediate-ca-ec.crt"));
     }
 
@@ -136,10 +136,10 @@ public class TestPemDirectoryKeystore {
         File keyFile = new File("src/test/resources", "www.doesnotexist.org-RSA.pem");
         String alias = "www.doesnotexist.org-RSA";
 
-        PrivateKey privateKey = TestPemKeystore.readPrivateKey(keyFile, "RSA", null);
-        X509Certificate certificate = TestPemKeystore.readCertificate(certFile);
-        X509Certificate caCertificate = TestPemKeystore.readCertificate(caCertFile);
-        X509Certificate rootCertificate = TestPemKeystore.readCertificate(rootCertFile);
+        PrivateKey privateKey = PemKeystoreTest.readPrivateKey(keyFile, "RSA", null);
+        X509Certificate certificate = PemKeystoreTest.readCertificate(certFile);
+        X509Certificate caCertificate = PemKeystoreTest.readCertificate(caCertFile);
+        X509Certificate rootCertificate = PemKeystoreTest.readCertificate(rootCertFile);
 
         Certificate[] certChain = new Certificate[] { certificate, caCertificate, rootCertificate };
         ks.setKeyEntry(alias, privateKey, null, certChain);
@@ -152,7 +152,7 @@ public class TestPemDirectoryKeystore {
         assertTrue(Files.exists(pemKeystoreDirFile.resolve("www.doesnotexist.org-RSA.crt")));
         assertTrue(Files.exists(pemKeystoreDirFile.resolve("www.doesnotexist.org-RSA.pem")));
 
-        TestPemKeystore.assertFilesEqual(keyFile.toPath(), pemKeystoreDirFile.resolve("www.doesnotexist.org-RSA.pem"));
+        PemKeystoreTest.assertFilesEqual(keyFile.toPath(), pemKeystoreDirFile.resolve("www.doesnotexist.org-RSA.pem"));
         assertArrayEquals(concat(certFile, caCertFile, rootCertFile),
                 Files.readAllBytes(pemKeystoreDirFile.resolve("www.doesnotexist.org-RSA.crt")));
     }

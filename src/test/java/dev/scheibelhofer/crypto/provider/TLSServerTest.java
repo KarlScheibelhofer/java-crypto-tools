@@ -22,9 +22,9 @@ import javax.net.ssl.SSLSocket;
 
 import org.junit.jupiter.api.Test;
 
-public class TestTLSServer {
+public class TLSServerTest {
 
-    static final Logger LOG = Logger.getLogger(TestTLSServer.class.getName());
+    static final Logger LOG = Logger.getLogger(TLSServerTest.class.getName());
 
     @Test
     public void testTLSServerSocket() throws Exception {

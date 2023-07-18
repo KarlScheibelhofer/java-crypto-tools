@@ -35,8 +35,8 @@ public class PemTest {
 
     @Test
     public void testCertificateEntry() throws Exception {
-        X509Certificate cert1a = TestPemKeystore.getResourceCertificate("www.doesnotexist.org-RSA.crt");
-        X509Certificate cert1b = TestPemKeystore.getResourceCertificate("www.doesnotexist.org-RSA.crt");
+        X509Certificate cert1a = PemKeystoreTest.getResourceCertificate("www.doesnotexist.org-RSA.crt");
+        X509Certificate cert1b = PemKeystoreTest.getResourceCertificate("www.doesnotexist.org-RSA.crt");
         // X509Certificate cert2 = TestPemKeystore.getResourceCertificate("www.doesnotexist.org-EC.crt");
 
         CertificateEntry ce0a = new Pem.CertificateEntry("alias");

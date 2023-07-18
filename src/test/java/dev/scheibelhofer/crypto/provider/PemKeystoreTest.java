@@ -47,10 +47,10 @@ import javax.crypto.spec.PBEParameterSpec;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class TestPemKeystore {
+public class PemKeystoreTest {
 
     static InputStream getResource(String name) {
-        return TestPemKeystore.class.getClassLoader().getResourceAsStream(name);
+        return PemKeystoreTest.class.getClassLoader().getResourceAsStream(name);
     }
 
     static X509Certificate getResourceCertificate(String name) throws GeneralSecurityException {
@@ -184,14 +184,14 @@ public class TestPemKeystore {
     public void testMatching() throws Exception {
        assertFalse(PemKeystore.matching((ECPublicKey) null, (ECPrivateKey) null));
 
-       PublicKey publicKey1a = TestPemKeystore.getResourceCertificate("www.doesnotexist.org-RSA.crt").getPublicKey();
-       PrivateKey privateKey1a = TestPemKeystore.readPrivateKey(new File("src/test/resources", "www.doesnotexist.org-RSA.pem"), "RSA", null);
+       PublicKey publicKey1a = PemKeystoreTest.getResourceCertificate("www.doesnotexist.org-RSA.crt").getPublicKey();
+       PrivateKey privateKey1a = PemKeystoreTest.readPrivateKey(new File("src/test/resources", "www.doesnotexist.org-RSA.pem"), "RSA", null);
        
-       PublicKey publicKey1b = TestPemKeystore.getResourceCertificate("www.doesnotexist.org-RSA.crt").getPublicKey();
+       PublicKey publicKey1b = PemKeystoreTest.getResourceCertificate("www.doesnotexist.org-RSA.crt").getPublicKey();
        
-       PrivateKey privateKeyRSA = TestPemKeystore.readPrivateKey(new File("src/test/resources", "rsa-2048.pem"), "RSA", null);
-       PrivateKey privateKeyEC = TestPemKeystore.readPrivateKey(new File("src/test/resources", "ec-p256.pem"), "EC", null);
-       PublicKey publicKeyEC = TestPemKeystore.getResourceCertificate("www.doesnotexist.org-EC.crt").getPublicKey();
+       PrivateKey privateKeyRSA = PemKeystoreTest.readPrivateKey(new File("src/test/resources", "rsa-2048.pem"), "RSA", null);
+       PrivateKey privateKeyEC = PemKeystoreTest.readPrivateKey(new File("src/test/resources", "ec-p256.pem"), "EC", null);
+       PublicKey publicKeyEC = PemKeystoreTest.getResourceCertificate("www.doesnotexist.org-EC.crt").getPublicKey();
        
        assertTrue(PemKeystore.matching(publicKey1a, privateKey1a));
        assertTrue(PemKeystore.matching(publicKey1b, privateKey1a));
@@ -204,7 +204,7 @@ public class TestPemKeystore {
     public void testMatchingIDs() throws Exception {
        assertTrue(PemKeystore.matchingKeyIDs(null, null));
        
-       X509Certificate cert = TestPemKeystore.getResourceCertificate("www.doesnotexist.org-RSA.crt");
+       X509Certificate cert = PemKeystoreTest.getResourceCertificate("www.doesnotexist.org-RSA.crt");
        assertTrue(PemKeystore.matchingKeyIDs(null, cert));
        
        X509Certificate mockCert = mock(X509Certificate.class, CALLS_REAL_METHODS);
@@ -226,7 +226,7 @@ public class TestPemKeystore {
         
         PemFileKeystore pemFileKeystoreEngine = new PemFileKeystore();
 
-        PrivateKey privateKey = TestPemKeystore.readPrivateKey(new File("src/test/resources", "rsa-2048.pem"), "RSA", null);
+        PrivateKey privateKey = PemKeystoreTest.readPrivateKey(new File("src/test/resources", "rsa-2048.pem"), "RSA", null);
 
         Certificate[] chain0 = new Certificate[0];
         pemFileKeystoreEngine.engineSetKeyEntry("alias", privateKey, null, chain0);

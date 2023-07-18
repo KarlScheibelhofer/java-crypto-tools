@@ -52,7 +52,7 @@ public class PemWriterTest {
         OutputStream exceptionOS = new ExOutputStream();
 
         PemWriter pw = new PemWriter(exceptionOS, false);
-        X509Certificate cert = TestPemKeystore.getResourceCertificate("github.com.crt");
+        X509Certificate cert = PemKeystoreTest.getResourceCertificate("github.com.crt");
         assertThrowsExactly(PemKeystoreException.class, () -> pw.writeEntry(new Pem.CertificateEntry("github.com", cert)));
 
         pw.close();
@@ -63,7 +63,7 @@ public class PemWriterTest {
         File f = new File("src/test/resources/read-only");
         f.createNewFile();
         f.setReadOnly();
-        final X509Certificate cert = TestPemKeystore.getResourceCertificate("github.com.crt");
+        final X509Certificate cert = PemKeystoreTest.getResourceCertificate("github.com.crt");
         assertThrowsExactly(PemKeystoreException.class, () -> PemWriter.write(f.toPath(), new Pem.CertificateEntry("github.com", cert)));
         f.delete();
     }
@@ -73,7 +73,7 @@ public class PemWriterTest {
         File f = new File("src/test/resources/read-only");
         f.createNewFile();
         f.setReadOnly();
-        final X509Certificate cert = TestPemKeystore.getResourceCertificate("github.com.crt");
+        final X509Certificate cert = PemKeystoreTest.getResourceCertificate("github.com.crt");
         assertThrowsExactly(PemKeystoreException.class, () -> PemWriter.write(f.toPath(), List.of(new Pem.CertificateEntry("github.com", cert))));
         f.delete();
     }
