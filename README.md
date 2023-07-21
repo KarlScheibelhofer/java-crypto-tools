@@ -7,7 +7,7 @@
 This library enables reading and writing keys and certificates in Java via the JCA KeyStore API.
 It includes a JCA provider implementing a `pem` type `KeyStore`. 
 It allows reading and writing unencrypted or encrypted private keys and certificates.
-This library is small and has no dependencies other tan standard Java Runtime.
+This library is small and has no dependencies other than standard Java Runtime.
 
 It enables easy integration of PEM keystores like the PEM version of the Common CA Database from Mozilla.
 
