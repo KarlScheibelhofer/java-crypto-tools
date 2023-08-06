@@ -90,4 +90,27 @@ public class PemWriterTest {
         pw.close();
     }
 
+    @Test
+    public void testWriteNullEntry() throws Exception {
+        OutputStream mockedOS = mock(OutputStream.class);
+        
+        PemWriter pw = new PemWriter(mockedOS, false);
+        Pem.Entry e = null;
+        assertThrowsExactly(NullPointerException.class, () -> pw.writeEntry(e));
+        
+        pw.close();
+    }
+
+    @Test
+    public void testWriteNullTypeEntry() throws Exception {
+        OutputStream mockedOS = mock(OutputStream.class);
+        
+        PemWriter pw = new PemWriter(mockedOS, false);
+        Pem.Entry e = new Pem.UnknownEntry("null", "-----BEGIN UNKNOWN-----");;
+        e.type = null;
+        assertThrowsExactly(NullPointerException.class, () -> pw.writeEntry(e));
+        
+        pw.close();
+    }
+
 }

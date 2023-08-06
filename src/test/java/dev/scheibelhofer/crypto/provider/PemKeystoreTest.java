@@ -47,6 +47,8 @@ import javax.crypto.spec.PBEParameterSpec;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import dev.scheibelhofer.crypto.provider.Pem.PrivateKeyEntry;
+
 public class PemKeystoreTest {
 
     static InputStream getResource(String name) {
@@ -258,6 +260,24 @@ public class PemKeystoreTest {
 
         assertTrue(ts.containsAlias("CN=github.com,O=GitHub\\, Inc.,L=San Francisco,ST=California,C=US"));
         assertFalse(ts.containsAlias("unknown-certificate"));
+    }
+
+    @Test
+    public void testPrivateKeyNullBranch() throws Exception {
+        // cannot touch all code branches via regular KeyStore API
+        
+        PemFileKeystore pemFileKeystoreEngine = new PemFileKeystore();
+
+        PrivateKey privateKey = PemKeystoreTest.readPrivateKey(new File("src/test/resources", "rsa-2048.pem"), "RSA", null);
+        String alias = "alias";
+
+        Certificate[] chain0 = new Certificate[0];
+        pemFileKeystoreEngine.engineSetKeyEntry(alias, privateKey, null, chain0);
+
+        PrivateKeyEntry privateKeyEntry = pemFileKeystoreEngine.privateKeys.get(alias);
+        privateKeyEntry.privateKey = null;
+
+        assertNull(pemFileKeystoreEngine.engineGetKey(alias, null));
     }
         
 }

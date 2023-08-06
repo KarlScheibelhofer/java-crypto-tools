@@ -15,20 +15,18 @@ import java.util.List;
  */
 public class JctProvider extends Provider {
 
-    private static JctProvider prov;
+    /**
+     * Helper class for singleton instance.
+     */
+    private static class SingletonHolder {
+        static final JctProvider INSTANCE = new JctProvider();
+    }
 
     /**
      * @return a singleton instance of this provider.
      */
     public static final JctProvider getInstance() {
-        if (prov == null) {
-            synchronized (JctProvider.class) {
-                if (prov == null) {
-                    prov = new JctProvider();
-                }
-            }
-        }
-        return prov;
+        return SingletonHolder.INSTANCE;
     }
 
     /** 
