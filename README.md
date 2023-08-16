@@ -83,7 +83,7 @@ KeyStore ks = KeyStore.getInstance("pem", JctProvider.getInstance());
 ks.load(new FileInputStream("IncludedRootsPEM.txt"), null);
 ```
 
-Note that the password can be `null` because there is not encryption or MAC protection in PEM certificate files.
+Note that the password can be `null` because there is no encryption or MAC protection in PEM certificate files.
 
 #### Writing PEM Files
 
