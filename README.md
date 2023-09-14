@@ -36,7 +36,7 @@ Features:
 The keystore file can contain multiple entries.
 The format of the entries are specified in [RFC 7468](https://www.rfc-editor.org/rfc/rfc7468).
 
-The `pem-directory` keystore ready all files in a directory tree.
+The `pem-directory` keystore reads all files in a directory tree.
 
 ## Include
 
