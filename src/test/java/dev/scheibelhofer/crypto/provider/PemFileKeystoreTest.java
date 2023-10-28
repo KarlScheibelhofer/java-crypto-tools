@@ -67,10 +67,10 @@ public class PemFileKeystoreTest {
                     String subjectDN = xc.getSubjectX500Principal().getName();
                     Assertions.assertEquals(subjectDN, alias);
                 } else {
-                    Assertions.fail();
+                    Assertions.fail("invalid cert type");
                 }
             } else {
-                Assertions.fail();
+                Assertions.fail("found unexpected non-certificate entry with alias: " + alias);
             }
         }
     }

@@ -83,7 +83,7 @@ abstract class Pem {
         }       
         
         private static PKCS8EncodedKeySpec createPkcs8KeySpec(byte[] encoding) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeySpecException, InvalidKeyException {
-            // we must tweak around a litte to access the PKCS#8 decoding feature only available in EncryptedPrivateKeyInfo
+            // we must tweak around a little to access the PKCS#8 decoding feature only available in EncryptedPrivateKeyInfo
             AlgorithmParameters nullAlgorithmParam = AlgorithmParameters.getInstance("0.1", JctProvider.getInstance());
             EncryptedPrivateKeyInfo epki = new EncryptedPrivateKeyInfo(nullAlgorithmParam, encoding);
             Cipher nullCipher = Cipher.getInstance("null", JctProvider.getInstance());
