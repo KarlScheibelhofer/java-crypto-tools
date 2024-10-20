@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 public class JctProviderTest {
     
     @Test
-    public void testGetInstnace() throws Exception {
+    public void testGetInstance() throws Exception {
         JctProvider prov1 = JctProvider.getInstance();
         assertNotNull(prov1);
         JctProvider prov2 = JctProvider.getInstance();
