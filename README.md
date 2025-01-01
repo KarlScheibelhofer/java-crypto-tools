@@ -46,7 +46,7 @@ Include the maven dependency in your `pom-xml`:
 <dependency>
   <groupId>dev.scheibelhofer</groupId>
   <artifactId>crypto-tools</artifactId>
-  <version>0.0.5</version>
+  <version>0.0.8</version>
 </dependency>
 ```
 
@@ -112,7 +112,7 @@ try (FileOutputStream fos = new FileOutputStream(keystoreFile)) {
 
 #### Aliases
 
-The PEM format usually does not contain names for entries.
+Typically, the PEM format does not contain names for entries.
 Thus, this implementation usually generates artificial key aliases on loading a keystore.
 For private key entries with associated certificate chains, the end entity's certificate subject DN in its RFC 2253 format is used as alias name of the entry.
 
@@ -136,7 +136,7 @@ A line with `Alias: ` is also created when writing a keystore created in Java.
 
 ### PEM Directory Tree
 
-The `pem-directory` KeyStore implementation supports reading all PEM files in a directory tree.
+The `pem-directory` KeyStore implementation supports reading all PEM files in a directory tree, i.e. files with names ending with `.crt` or `.pem`.
 
 To read all files in a directory tree, you need to supply a stream that contains the file path of the directory. 
 This is necessary because the `load` method of a Java KeyStore only accepts an InputStream as source.
@@ -251,6 +251,8 @@ Then, you can create a PEM keystore including the private key and the certificat
 ```bash
 cat webserver-private-key.pem webserver-certificate.pem > webserver-keystore.pem
 ```
+
+Finally, load it in Java using:
 
 ```java
 import dev.scheibelhofer.crypto.provider.JctProvider;
