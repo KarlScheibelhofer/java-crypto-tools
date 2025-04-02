@@ -52,7 +52,7 @@ Include the maven dependency in your `pom-xml`:
 
 ### PEM File
 
-If you have private key and certificates in OpenSSL PEM format in separate files, 
+If you have a private key and certificates in OpenSSL PEM format in separate files, 
 simply write them all together in a single file. 
 For example:
 
