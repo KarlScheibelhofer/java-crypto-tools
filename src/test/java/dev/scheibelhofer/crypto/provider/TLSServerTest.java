@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -40,7 +41,7 @@ public class TLSServerTest {
         System.setProperty("javax.net.ssl.trustStore", Path.of("src/test/resources/www.doesnotexist.org-EC-truststore.pem").toAbsolutePath().toString());
         System.setProperty("javax.net.ssl.trustStorePassword", "password");
         System.setProperty("javax.net.ssl.trustStoreType", "pem");
-        URL url = new URL("https://localhost:8443/");
+        URL url = new URI("https://localhost:8443/").toURL();
         try (BufferedReader responseReader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
             String line;
             while ((line = responseReader.readLine()) != null) {
@@ -72,8 +73,8 @@ public class TLSServerTest {
                 sb.append("Cipher-Suite: " + session.getCipherSuite()).append("\r\n");
                 sb.append("Protocol: " + session.getProtocol()).append("\r\n");
                 X509Certificate serverCert = serverCertChain.get(0);
-                sb.append("Server Certificate - Subject: " + serverCert.getSubjectDN())
-                  .append(" - Issuer: ").append(serverCert.getIssuerDN())
+                sb.append("Server Certificate - Subject: " + serverCert.getSubjectX500Principal())
+                  .append(" - Issuer: ").append(serverCert.getIssuerX500Principal())
                   .append(" - Serial: 0x").append(serverCert.getSerialNumber().toString(16))
                   .append("\r\n");
                 String body = sb.toString();
