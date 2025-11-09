@@ -100,6 +100,11 @@ abstract class Pem {
             super(Type.encryptedPrivateKey, alias);
         }
         
+        EncryptedPrivateKeyEntry(String alias, EncryptedPrivateKeyInfo encryptedPrivateKey) {
+            super(Type.encryptedPrivateKey, alias);
+            this.encryptedPrivateKey = encryptedPrivateKey;
+        }
+        
         public EncryptedPrivateKeyEntry(String alias, PrivateKey key, char[] password) {
             super(Type.encryptedPrivateKey, alias);
             this.privateKey = key;

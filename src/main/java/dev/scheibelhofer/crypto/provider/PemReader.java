@@ -1,79 +1,88 @@
 package dev.scheibelhofer.crypto.provider;
 
-import java.io.BufferedReader;
 import java.io.Closeable;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.security.DEREncodable;
+import java.security.KeyPair;
+import java.security.PEMDecoder;
+import java.security.PEMRecord;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
+
+import javax.crypto.EncryptedPrivateKeyInfo;
 
 /**
  * Reading PEM entries from a stream.
  */
 class PemReader implements Closeable {
 
-    private BufferedReader reader;
+    private InputStream is;
     private String aliasCandidate;
 
     PemReader(InputStream is, String aliasCandidate) {
-        reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+        this.is = is;
         this.aliasCandidate = aliasCandidate;
     }
 
     List<Pem.Entry> readEntries() throws IOException {
         List<Pem.Entry> entries = new ArrayList<>();
         
-        Pem.Entry entry;
-        while ((entry = readEntry()) != null) {
-            entries.add(entry);
+        try {
+            Pem.Entry entry;
+            while ((entry = readEntry()) != null) {
+                entries.add(entry);
+            }
+        } catch (EOFException eofEx) {
+            // end of stream reached, that's fine
         }
         
         return entries;
     }
 
     Pem.Entry readEntry() throws IOException {
-        StringBuilder sb = new StringBuilder(1024);
-        String line;
-        Pem.Entry entry = new Pem.UnknownEntry(null, null);
         String alias = this.aliasCandidate;
 
-        while ((line = reader.readLine()) != null && !line.startsWith(Pem.BEGIN)) {
-            String trimmedLine = line.trim();
-            if (trimmedLine.isEmpty()) {
-                continue;
-            }
-            if (trimmedLine.toLowerCase(Locale.US).startsWith("alias:")) {
-                alias = trimmedLine.substring(trimmedLine.indexOf(':') + 1, trimmedLine.length()).trim();
-            }
+        // first read as PEMRecord to be be able to get the alias if present
+        PEMRecord pemRecord = PEMDecoder.of().decode(is, PEMRecord.class);
+        String pemHeaderAlias = extractAliasFromLeadingData(pemRecord.leadingData());
+        if (pemHeaderAlias != null) {
+            alias = pemHeaderAlias;   
         }
 
-        if (line != null) {
-            switch (line) {
-                case Pem.BEGIN_CERTIFICATE:  entry = new Pem.CertificateEntry(alias); break;
-                case Pem.BEGIN_PRIVATE_KEY:  entry = new Pem.PrivateKeyEntry(alias); break;
-                case Pem.BEGIN_ENCRYPTED_PRIVATE_KEY:  entry = new Pem.EncryptedPrivateKeyEntry(alias); break;
-                default: entry = new Pem.UnknownEntry(alias, line);
-            }
-        }
+        // now read PEM to key or certificate
+        DEREncodable decodedPem = PEMDecoder.of().decode(pemRecord.toString());
+        return switch (decodedPem) {
+            case X509Certificate cert -> new Pem.CertificateEntry(alias, cert);
+            case PrivateKey privateKey -> new Pem.PrivateKeyEntry(alias, privateKey);
+            case KeyPair keyPair -> new Pem.PrivateKeyEntry(alias, keyPair.getPrivate());
+            case EncryptedPrivateKeyInfo encryptedPrivateKeyInfo -> new Pem.EncryptedPrivateKeyEntry(alias, encryptedPrivateKeyInfo);
+            default -> new Pem.UnknownEntry(alias, pemRecord.type());
+        };
+    }
 
-        while ((line = reader.readLine()) != null && !line.startsWith(Pem.END)) {
-            sb.append(line);
-        }
-        String base64 = sb.toString().trim();
-        if (base64.length() == 0) {
+    private String extractAliasFromLeadingData(byte[] leadingData) {
+        if (leadingData == null) {
             return null;
         }
-        entry.initFromEncoding(Base64.getMimeDecoder().decode(sb.toString()));
-        return entry;
+        String leadingText = new String(leadingData, StandardCharsets.UTF_8);
+        for (String line : leadingText.split("\\r?\\n")) {
+            String trimmedLine = line.trim();
+            if (trimmedLine.toLowerCase(Locale.US).startsWith("alias:")) {
+                return trimmedLine.substring(trimmedLine.indexOf(':') + 1).trim();
+            }
+        }
+        return null;
     }
 
     @Override
     public void close() throws IOException {
-        this.reader.close();
+        this.is.close();
     }
 
 }
