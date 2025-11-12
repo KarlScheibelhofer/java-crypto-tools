@@ -144,10 +144,10 @@ abstract class Pem {
                 Cipher cipher = Cipher.getInstance(pbes2Name);
 
                 byte[] salt = new byte[8];
-                SecureRandom.getInstance("NativePRNGNonBlocking").nextBytes(salt);
+                new SecureRandom().nextBytes(salt);
                 int iterations = 2048;
                 byte[] iv = new byte[16];
-                SecureRandom.getInstance("NativePRNGNonBlocking").nextBytes(iv);
+                new SecureRandom().nextBytes(iv);
                 IvParameterSpec ivParamSpec = new IvParameterSpec(iv);
                 PBEParameterSpec pbeParamSpec = new PBEParameterSpec(salt, iterations, ivParamSpec);
 
