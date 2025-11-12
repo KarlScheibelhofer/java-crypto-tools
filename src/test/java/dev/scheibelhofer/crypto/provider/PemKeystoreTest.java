@@ -20,14 +20,8 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.AlgorithmParameters;
-import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
-import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.*;
 import java.security.SecureRandom;
-import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -155,15 +149,23 @@ public class PemKeystoreTest {
         assertEquals("PBEWithHmacSHA256AndAES_256", ap.toString());
     }
 
+    private SecureRandom getRandom() throws NoSuchAlgorithmException {
+        String os = System.getProperty("os.name");
+        if (os.contains("Windows")) {
+            return new SecureRandom();
+        }
+        return SecureRandom.getInstance("NativePRNGNonBlocking");
+    }
+
     @Test
     public void testNullCipher() throws Exception {
         Cipher c = Cipher.getInstance("null/mode/padding", JctProvider.getInstance());
         assertEquals(16, c.getBlockSize());
         assertNull(c.getIV());
         assertThrows(UnsupportedOperationException.class,() -> c.getParameters());
-        c.init(Cipher.ENCRYPT_MODE, new NullPrivateKey(), SecureRandom.getInstance("NativePRNGNonBlocking"));
-        c.init(Cipher.ENCRYPT_MODE, new NullPrivateKey(), new IvParameterSpec(new byte[16]), SecureRandom.getInstance("NativePRNGNonBlocking"));
-        c.init(Cipher.ENCRYPT_MODE, new NullPrivateKey(), AlgorithmParameters.getInstance("null", JctProvider.getInstance()), SecureRandom.getInstance("NativePRNGNonBlocking"));
+        c.init(Cipher.ENCRYPT_MODE, new NullPrivateKey(), getRandom());
+        c.init(Cipher.ENCRYPT_MODE, new NullPrivateKey(), new IvParameterSpec(new byte[16]), getRandom());
+        c.init(Cipher.ENCRYPT_MODE, new NullPrivateKey(), AlgorithmParameters.getInstance("null", JctProvider.getInstance()), getRandom());
 
         byte[] series = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
