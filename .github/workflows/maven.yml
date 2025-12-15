@@ -41,7 +41,7 @@ jobs:
         message: 'commit test coverage badge'
         add: '.github/badges/*.svg'
     - name: Upload JaCoCo coverage report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: jacoco-report
         path: target/site/jacoco/
