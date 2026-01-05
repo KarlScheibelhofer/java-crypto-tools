@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class PemFileKeystoreTest {
@@ -210,6 +211,7 @@ public class PemFileKeystoreTest {
     }
 
     @Test
+    @Disabled("DES3 unsupported in Java PEM API")
     public void testLoadDes3PrivateKey() throws Exception {
         // generated with: openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048
         // -out private-key-des3.pem -pass pass:password -des3
@@ -478,6 +480,7 @@ public class PemFileKeystoreTest {
 
         // file from
         // "https://ccadb.my.salesforce-sites.com/mozilla/IncludedRootsPEMTxt?TrustBitsInclude=Websites"
+        // curl --url 'https://ccadb.my.salesforce-sites.com/mozilla/IncludedRootsPEMTxt?TrustBitsInclude=Websites' --header 'User-Agent: Mozilla/5.0' --output IncludedRootsPEM.txt
         File mozillaTruststoreFile = new File("src/test/resources/", "IncludedRootsPEM.txt");
         try (FileInputStream is = new FileInputStream(mozillaTruststoreFile)) {
             ks.load(is, null);
