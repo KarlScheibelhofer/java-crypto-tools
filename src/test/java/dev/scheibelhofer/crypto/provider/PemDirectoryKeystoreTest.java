@@ -277,7 +277,7 @@ public class PemDirectoryKeystoreTest {
     public void loadKeystoreSpecial() throws Exception {
         KeyStore ks = KeyStore.getInstance("pem-directory", JctProvider.getInstance());
 
-        assertThrowsExactly(IOException.class, () -> ks.load(new ByteArrayInputStream("src/test/resources/dir-keystore-special".getBytes(StandardCharsets.UTF_8)), null));
+        assertThrowsExactly(IllegalArgumentException.class, () -> ks.load(new ByteArrayInputStream("src/test/resources/dir-keystore-special".getBytes(StandardCharsets.UTF_8)), null));
     }
 
     @Test
