@@ -28,6 +28,7 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ public class PemDirectoryKeystoreTest {
 
         String caCertsDirPath = Paths.get("src/test/resources/ca-certificates").toFile().getAbsolutePath();
         Path pemKeystoreDirFile = Paths.get("src/test/resources/out", "ca-certificates.pem-folder");
-        pemKeystoreDirFile.getParent().toFile().mkdirs();
+        Files.createDirectories(pemKeystoreDirFile.getParent());
         Files.writeString(pemKeystoreDirFile, caCertsDirPath, StandardCharsets.UTF_8);
 
         try (FileInputStream is = new FileInputStream(pemKeystoreDirFile.toFile())) {
@@ -69,7 +70,7 @@ public class PemDirectoryKeystoreTest {
         deleteDirectory(caCertsDirPath);
 
         Path pemKeystoreDirFile = Paths.get("src/test/resources/out/truststore.pem-directory");
-        pemKeystoreDirFile.getParent().toFile().mkdirs();
+        Files.createDirectories(pemKeystoreDirFile.getParent());
         Files.writeString(pemKeystoreDirFile, caCertsDirPath.toFile().getAbsolutePath(), StandardCharsets.UTF_8);
 
         try (FileInputStream is = new FileInputStream(pemKeystoreDirFile.toFile())) {
@@ -87,7 +88,7 @@ public class PemDirectoryKeystoreTest {
         OutputStream dummyOs = new OutputStream() {
 
             @Override
-            public void write(int b) throws IOException {
+            public void write(int b) {
                 // empty
             }
 
@@ -167,10 +168,12 @@ public class PemDirectoryKeystoreTest {
 
     private void deleteDirectory(Path toBeDeleted) throws IOException {
         if (Files.exists(toBeDeleted)) {
-            Files.walk(toBeDeleted)
-                    .sorted(Comparator.reverseOrder())
-                    .map(Path::toFile)
-                    .forEach(File::delete);
+            try (Stream<Path> toBeDeletedStream = Files.walk(toBeDeleted)) {
+                toBeDeletedStream
+                        .sorted(Comparator.reverseOrder())
+                        .map(Path::toFile)
+                        .forEach(File::delete);
+            }
         }
     }
 
@@ -237,19 +240,19 @@ public class PemDirectoryKeystoreTest {
     public void testInstallProvider() throws Exception {
         assertThat(Security.addProvider(JctProvider.getInstance()), is(greaterThanOrEqualTo(0)));
 
-        assertNotNull(KeyStore.getInstance("pem").getProvider().equals(JctProvider.getInstance()));
-        assertNotNull(KeyStore.getInstance("PEM").getProvider().equals(JctProvider.getInstance()));
-        assertNotNull(KeyStore.getInstance("Pem").getProvider().equals(JctProvider.getInstance()));
+        assertEquals(KeyStore.getInstance("pem").getProvider(), JctProvider.getInstance());
+        assertEquals(KeyStore.getInstance("PEM").getProvider(), JctProvider.getInstance());
+        assertEquals(KeyStore.getInstance("Pem").getProvider(), JctProvider.getInstance());
 
-        assertNotNull(KeyStore.getInstance("pem-directory").getProvider().equals(JctProvider.getInstance()));
-        assertNotNull(KeyStore.getInstance("PEM-DIRECTORY").getProvider().equals(JctProvider.getInstance()));
-        assertNotNull(KeyStore.getInstance("Pem-Directory").getProvider().equals(JctProvider.getInstance()));
+        assertEquals(KeyStore.getInstance("pem-directory").getProvider(), JctProvider.getInstance());
+        assertEquals(KeyStore.getInstance("PEM-DIRECTORY").getProvider(), JctProvider.getInstance());
+        assertEquals(KeyStore.getInstance("Pem-Directory").getProvider(), JctProvider.getInstance());
 
         Security.removeProvider(JctProvider.getInstance().getName());
     }
 
     @Test
-    public void testBasename() throws Exception {
+    public void testBasename() {
         assertEquals("dummy", PemDirectoryKeystore.getFileBasename(Path.of("dummy")));
         assertEquals("dummy", PemDirectoryKeystore.getFileBasename(Path.of("dummy.crt")));
     }
