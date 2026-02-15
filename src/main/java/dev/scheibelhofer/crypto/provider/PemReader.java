@@ -22,8 +22,8 @@ import javax.crypto.EncryptedPrivateKeyInfo;
  */
 class PemReader implements Closeable {
 
-    private InputStream is;
-    private String aliasCandidate;
+    private final InputStream is;
+    private final String aliasCandidate;
 
     PemReader(InputStream is, String aliasCandidate) {
         this.is = is;
