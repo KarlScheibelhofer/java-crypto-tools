@@ -49,6 +49,7 @@ class PemReader implements Closeable {
         String alias = this.aliasCandidate;
 
         // first read as PEMRecord to be be able to get the alias if present
+        // leadingData() is only available for generic PEMRecord
         PEMRecord pemRecord = PEMDecoder.of().decode(is, PEMRecord.class);
         String pemHeaderAlias = extractAliasFromLeadingData(pemRecord.leadingData());
         if (pemHeaderAlias != null) {
