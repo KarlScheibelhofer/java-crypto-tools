@@ -7,8 +7,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.DEREncodable;
 import java.security.KeyPair;
+import java.security.PEM;
 import java.security.PEMDecoder;
-import java.security.PEMRecord;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -48,22 +48,22 @@ class PemReader implements Closeable {
     Pem.Entry readEntry() throws IOException {
         String alias = this.aliasCandidate;
 
-        // first read as PEMRecord to be be able to get the alias if present
-        // leadingData() is only available for generic PEMRecord
-        PEMRecord pemRecord = PEMDecoder.of().decode(is, PEMRecord.class);
-        String pemHeaderAlias = extractAliasFromLeadingData(pemRecord.leadingData());
+        // first read as PEM to be be able to get the alias if present
+        // leadingData() is only available for generic PEM
+        PEM pem = PEMDecoder.of().decode(is, PEM.class);
+        String pemHeaderAlias = extractAliasFromLeadingData(pem.leadingData());
         if (pemHeaderAlias != null) {
             alias = pemHeaderAlias;   
         }
 
         // now read PEM to key or certificate
-        DEREncodable decodedPem = PEMDecoder.of().decode(pemRecord.toString());
+        DEREncodable decodedPem = PEMDecoder.of().decode(pem.toString());
         return switch (decodedPem) {
             case X509Certificate cert -> new Pem.CertificateEntry(alias, cert);
             case PrivateKey privateKey -> new Pem.PrivateKeyEntry(alias, privateKey);
             case KeyPair keyPair -> new Pem.PrivateKeyEntry(alias, keyPair.getPrivate());
             case EncryptedPrivateKeyInfo encryptedPrivateKeyInfo -> new Pem.EncryptedPrivateKeyEntry(alias, encryptedPrivateKeyInfo);
-            default -> new Pem.UnknownEntry(alias, pemRecord.type());
+            default -> new Pem.UnknownEntry(alias, pem.type());
         };
     }
 
