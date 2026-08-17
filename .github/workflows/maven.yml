@@ -35,7 +35,7 @@ jobs:
         echo "coverage = ${{ steps.jacoco.outputs.coverage }}"
         echo "branch coverage = ${{ steps.jacoco.outputs.branches }}"
     - name: Commit and push the badge (if it changed)
-      uses: EndBug/add-and-commit@v9
+      uses: EndBug/add-and-commit@v11
       with:
         default_author: github_actions
         message: 'commit test coverage badge'
